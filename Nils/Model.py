@@ -25,21 +25,21 @@ class log_act(torch.nn.Module):
 
 
 class MyModel(torch.nn.Module):
-    def __init__(self):
+    def __init__(self, polyrank):
         super(MyModel, self).__init__()
         self.layers = torch.nn.Sequential(
-            torch.nn.Linear(1, 1),
+            torch.nn.Linear(1, polyrank, bias=True),
             log_act(),
             #torch.nn.ReLU(),
-            torch.nn.Linear(1, 1),
+            torch.nn.Linear(polyrank, 1, bias=True),
             exp_act()
         )
         self.layers.apply(self.init_weights)
 
     def init_weights(self, m):
         if isinstance(m, torch.nn.Linear):
-            torch.nn.init.constant(m.weight, 0.2)
-            m.bias.data.fill_(0)
+            torch.nn.init.normal_(m.weight, 2, 1)
+            m.bias.data.fill_(0.1)
 
 
     def forward(self, x):
