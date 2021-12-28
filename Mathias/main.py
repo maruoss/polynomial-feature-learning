@@ -368,68 +368,143 @@ trainer = pl.Trainer(
 )
 trainer.fit(model, dm)
 # %%
-# %%
-# Check predictions INSAMPLE
-X_train = dm.X_train
-y_train = dm.y_train
-X_test = dm.X_test
-y_test = dm.y_test
-model.eval()
-with torch.no_grad():
-    y_pred = model(X_test)
-
-# sns.set_theme()
-
-x = torch.cat([X_train, X_test], dim=0)
-x = torch.from_numpy(np.linspace(x.min(), x.max(), 200))
-
-# Create groundtruth over possibly larger domain
-y = TARGET_FN(x)
-
-# Plot training and test predictions
-plt.plot(x, y)
-plt.scatter(X_train, y_train, c="orange", alpha=1., label="train prediction", marker=".")
-plt.scatter(X_test, y_pred, c="green", alpha=0.1, label="test prediction", marker=".")
-plt.legend()
-# plt.autoscale(enable=False)
-plt.show()
-
-#%%
-
-# Check predictions OUT OF SAMPLE
-X_train = dm.X_train
-y_train = dm.y_train
-low = -100.
-high = 20000.
-X_test = torch.linspace(low, high, int((high-low+1))).view(-1, 1)
-y_test = TARGET_FN(X_test)
-if SCALE:
-    X_test = dm.scaler.transform(X_test)
-    X_test = torch.from_numpy(X_test).to(torch.float32)
-# %%
-
-X_test
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PREDICTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+trainer.test(
+    model, dm
+)
 
 # %%
-model.eval()
-with torch.no_grad():
-    y_pred = model(X_test)
 
-# sns.set_theme()
+class predictions:
+    def __init__(self, 
+                datamodule, 
+                model,
+                low: float,
+                high: float, 
+                scale: bool, 
+                oos: bool,
+                target_fn,
+                show_orig_scale: bool
+                ):
 
-x = torch.cat([X_train, X_test], dim=0)
-x = torch.from_numpy(np.linspace(x.min(), x.max(), 200))
+        self.dm = datamodule
+        self.model = model
+        self.X_train = dm.X_train
+        self.y_train = dm.y_train
+        self.target_fn = target_fn
+        self.show_orig_scale = show_orig_scale
 
-# Create groundtruth over possibly larger domain
-y = TARGET_FN(x)
+        if oos:
+            X_test = torch.linspace(low, high, int((high-low+1))).view(-1, 1)
+            self.y_test = target_fn(X_test)
+            if scale:
+                X_test = dm.scaler.transform(X_test)
+                self.X_test = torch.from_numpy(X_test).to(torch.float32)
 
-# Plot training and test predictions
-plt.plot(x, y)
-plt.scatter(X_train, y_train, c="orange", alpha=1., label="train prediction", marker=".")
-plt.scatter(X_test, y_pred, c="green", alpha=0.1, label="test prediction", marker=".")
-plt.legend()
-# plt.autoscale(enable=False)
-plt.show()
+        else:
+            self.X_test  = dm.X_test
+            self.y_test = dm.y_test
+
+        with torch.no_grad():
+            self.y_pred = model(self.X_test)
+    
+    def plot(self):
+        # clear all plots
+        plt.close()
+        plt.cla()
+        plt.clf()
+
+        if self.show_orig_scale:
+            # transform back to original scale before plotting
+            self.X_train = self.dm.scaler.inverse_transform(self.X_train)
+            self.X_train = torch.from_numpy(self.X_train).to(torch.float32)
+            self.X_test = self.dm.scaler.inverse_transform(self.X_test)
+            self.X_test = torch.from_numpy(self.X_test).to(torch.float32)
+
+        x = torch.cat([self.X_train, self.X_test], dim=0)
+        x = torch.from_numpy(np.linspace(x.min(), x.max(), 200))
+
+        # Create groundtruth over possibly larger domain
+        y = self.target_fn(x)
+        
+
+        plt.plot(x, y)
+        plt.scatter(self.X_train, self.y_train, c="orange", alpha=1., label="train prediction", marker=".")
+        plt.scatter(self.X_test, self.y_pred, c="green", alpha=0.1, label="test prediction", marker=".")
+        plt.legend()
+        # plt.autoscale(enable=False)
+        plt.show()
+        
+
+# %%
+plotter = predictions(dm, model, -1000, 10000, True, True, constantf, True)
+plotter.plot()
+
+plotter.X_test
+
+
+# %%
+# # Check predictions INSAMPLE
+# X_train = dm.X_train
+# y_train = dm.y_train
+# X_test = dm.X_test
+# y_test = dm.y_test
+# model.eval()
+# with torch.no_grad():
+#     y_pred = model(X_test)
+
+# # sns.set_theme()
+
+# x = torch.cat([X_train, X_test], dim=0)
+# x = torch.from_numpy(np.linspace(x.min(), x.max(), 200))
+
+# # Create groundtruth over possibly larger domain
+# y = TARGET_FN(x)
+
+# # Plot training and test predictions
+# plt.plot(x, y)
+# plt.scatter(X_train, y_train, c="orange", alpha=1., label="train prediction", marker=".")
+# plt.scatter(X_test, y_pred, c="green", alpha=0.1, label="test prediction", marker=".")
+# plt.legend()
+# # plt.autoscale(enable=False)
+# plt.show()
+
+# #%%
+
+# # Check predictions OUT OF SAMPLE
+# X_train = dm.X_train
+# y_train = dm.y_train
+# low = -100.
+# high = 20000.
+# X_test = torch.linspace(low, high, int((high-low+1))).view(-1, 1)
+# y_test = TARGET_FN(X_test)
+# if SCALE:
+#     X_test = dm.scaler.transform(X_test)
+#     X_test = torch.from_numpy(X_test).to(torch.float32)
+# # %%
+
+# X_test
+
+# # %%
+# model.eval()
+# with torch.no_grad():
+#     y_pred = model(X_test)
+
+# # sns.set_theme()
+
+# x = torch.cat([X_train, X_test], dim=0)
+# x = torch.from_numpy(np.linspace(x.min(), x.max(), 200))
+
+# # Create groundtruth over possibly larger domain
+# y = TARGET_FN(x)
+
+# # Plot training and test predictions
+# plt.plot(x, y)
+# plt.scatter(X_train, y_train, c="orange", alpha=1., label="train prediction", marker=".")
+# plt.scatter(X_test, y_pred, c="green", alpha=0.1, label="test prediction", marker=".")
+# plt.legend()
+# # plt.autoscale(enable=False)
+# plt.show()
 
 
 
