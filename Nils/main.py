@@ -7,7 +7,7 @@ import pandas as pd
 from tqdm import tqdm
 import numpy as np
 import Model
-
+from matplotlib import pyplot
 
 
 def prepdata(x):
@@ -32,17 +32,22 @@ def compute_test_accuracy(model, val_loader, loss_fn, device):
     return torch.mean(accuracy)
 
 
+def gen_func(x):
+    y =  7*(x**3) - 20*(x**2) + 4*x + 200
+    return y
+
 def gen_data():
     mylen = 10000
-    x_train =  np.reshape(np.arange(1, mylen+1), (-1, 1))
-    y_train =  np.reshape(np.arange(2, mylen+2), (-1, 1))
+    x_train =  np.reshape(np.arange(0, mylen)/mylen, (-1, 1))
+    y_train =  gen_func(x_train)
     return x_train, y_train
 
-
+polyrank = 7
 print("Starting")
 x_train, y_train = gen_data()
 print("Generated data")
-print(x_train[0], y_train[0])
+x_train_orig = x_train
+y_train_orig = y_train
 
 x_train = prepdata(x_train)
 print("preprocessing complete")
@@ -54,6 +59,7 @@ print(f"Device is {device}.")
 x_train, x_val, y_train, y_val = model_selection.train_test_split(x_train, y_train, test_size=0.1)
 print("data splitting complete")
 
+x_train_orig = torch.tensor(x_train_orig, device=device, dtype=torch.float).to(device)
 x_train = torch.tensor(x_train, device=device, dtype=torch.float).to(device)
 y_train = torch.tensor(y_train, device=device, dtype=torch.float).to(device)
 x_val = torch.tensor(x_val, device=device, dtype=torch.float).to(device)
@@ -63,21 +69,15 @@ print("tensorification complete")
 print(x_train)
 
 batch_size = 64
-epochs = 100
-
 train_loader = torch.utils.data.DataLoader(dataset=torch.utils.data.TensorDataset(x_train, y_train), batch_size=batch_size, shuffle=True)
 validation_loader = torch.utils.data.DataLoader(dataset=torch.utils.data.TensorDataset(x_val, y_val), batch_size=batch_size, shuffle=False)
 
-# filterlen = [50,10,3]
-# strides = [5,5,5]
-# featuremap_sizes = [8,32,64]
-# model = Model.CNN(featuremap_sizes, filterlen, strides, device)
-
-model = Model.MyModel().to(device)
+model = Model.MyModel(polyrank).to(device)
 
 loss_fn = torch.nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.0005)
 
+epochs = 500
 
 def train(model, train_loader, validation_loader, epochs, device):
     for epoch in range(epochs):
@@ -101,3 +101,20 @@ def train(model, train_loader, validation_loader, epochs, device):
 
 print("training started", flush=True)
 train(model, train_loader, validation_loader, epochs, device)
+results = model(x_train_orig).cpu().detach()
+print(results)
+pyplot.plot(x_train_orig. cpu().detach(), results, '--bo', label = "prediction")
+pyplot.plot(x_train_orig.cpu().detach(), y_train_orig, '--ro', label = "ground truth")
+pyplot.legend()
+
+weights = []
+biases = []
+weights.append(model.layers[0].weight)
+weights.append(model.layers[2].weight)
+biases.append(model.layers[0].bias)
+biases.append(model.layers[2].bias)
+print("Weights:")
+print(weights)
+print("Biases:")
+print(biases)
+pyplot.show()
