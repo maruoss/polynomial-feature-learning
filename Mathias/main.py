@@ -11,6 +11,9 @@ from argparse import ArgumentParser
 from torchmetrics.functional import r2_score
 from torch import nn
 from sklearn.preprocessing import MinMaxScaler
+from pytorch_lightning.callbacks import ModelCheckpoint
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 from numpy.random import default_rng
 import pdb
@@ -25,44 +28,9 @@ import warnings
 warnings.filterwarnings("ignore", ".*Consider increasing the value of the `num_workers` argument*")
 warnings.filterwarnings("ignore", category=DeprecationWarning) 
 
-# %%
-# constant function for y values
-def constantf(x: torch.Tensor, y: torch.FloatTensor) -> torch.Tensor:
-    """
-    Takes array x of shape [obs, dim] as input and outputs constant y
-    in shape [obs, 1].
-    """
-    nobs = x.size(dim=0)
-    y = torch.ones(nobs).reshape(-1, 1) * y
-    return y
-
-# linear function
-def linearf(x: torch.Tensor, slope:float=1., bias: float=0.) -> torch.Tensor:
-    """
-    Takes array x of shape [obs, dim] as input and outputs y
-    in shape [obs, 1].
-    """
-    y = x * slope
-    y = y.sum(axis=1, keepdim=True) + bias # sum across dimension and add single bias
-    return y
-
-
-# %%
-# create x values
-def createargs(n, d, low, high) -> torch.Tensor():
-    """
-    Create n values of dimension d uniformly between [low, high]
-    Input: n - number of observations
-           d - dimension of observation
-           low/ high - lower/ upper bounds of uniform distr.
-    Output: [n, d] torch.FloatTensor
-    """
-    datamatrix = torch.FloatTensor(n, d).uniform_(low, high)
-    return datamatrix
-
 # %% Unit test
 # Create dataset and groundtruths
-# X = createargs(n=3, d=2, low=0, high=10)
+# X = uniform_args(n=3, d=2, low=0, high=10)
 # print(X)
 # # y = constantf(X, y=3.)
 # y = linearf(X, 2, 10)
@@ -83,43 +51,38 @@ def createargs(n, d, low, high) -> torch.Tensor():
 # %%
 # DataModule
 class MyDataModule(pl.LightningDataModule):
-    def __init__(self, batch_size: int, n: int, d: int, low: float, high: float, funct:str, scale:bool):
+    def __init__(self, batch_size: int, scale:bool, sample_fn, target_fn, **kwargs):
         """
         Args:
         n = number of observations to generate
         d = dimensions to generate
-        low = lower bound of continuous uniform sampling
-        high = upper bound of continous uniform sampling
+        low = lower bound of data sampling
+        high = upper bound of data sampling
         """
         super().__init__()
         self.save_hyperparameters()
         self.batch_size = batch_size
         self.scale = scale
         # Create full dataset
-        self.X = createargs(n, d, low, high)
-        if funct == "constantf":
-            self.y = constantf(self.X, y=3.) # set constant function value here
-        elif funct == "linearf":
-            self.y = linearf(self.X)
-        else:
-            raise NotImplementedError("Please specify a function via a string: 'constantf', 'linearf'")
+        self.X = sample_fn(**kwargs) # sample data
+        self.y = target_fn(self.X) # create target values
 
     def setup(self, stage):
         # Split dataset into X, X_test
-        self.X, self.X_test, self.y, self.y_test = train_test_split(self.X, self.y,
+        self.X_temp, self.X_test, self.y_temp, self.y_test = train_test_split(self.X, self.y,
                 train_size=0.8, shuffle=True)
         # Split X into X_train, X_val
-        self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X, self.y,
+        self.X_train, self.X_val, self.y_train, self.y_val = train_test_split(self.X_temp, self.y_temp,
                 train_size=0.8, shuffle=True)
         
         if self.scale:
-            scaler = MinMaxScaler(feature_range=(0.1, 1)) # SET SCALE RANGE -> 0 IS NOT SUITABLE FOR LN transform -> -inf
+            self.scaler = MinMaxScaler(feature_range=(0.1, 1)) # SET SCALE RANGE -> 0 IS NOT SUITABLE FOR LN transform -> -inf
             assert self.X_train.dtype == self.X_val.dtype == self.X_test.dtype
             datatype = self.X_train.dtype
             # Scale train, val, testset
-            self.X_train = scaler.fit_transform(self.X_train)
-            self.X_val = scaler.transform(self.X_val)
-            self.X_test = scaler.transform(self.X_test)
+            self.X_train = self.scaler.fit_transform(self.X_train)
+            self.X_val = self.scaler.transform(self.X_val)
+            self.X_test = self.scaler.transform(self.X_test)
             self.X_train = torch.from_numpy(self.X_train).to(datatype)
             self.X_val = torch.from_numpy(self.X_val).to(datatype)
             self.X_test = torch.from_numpy(self.X_test).to(datatype)
@@ -160,7 +123,7 @@ class MyDataModule(pl.LightningDataModule):
 # %%
 # Model
 class PolyModel(pl.LightningModule):
-    def __init__(self, input_dim: int, hidden_dim: int, learning_rate: float, mode: str="poly"):
+    def __init__(self, input_dim: int, hidden_dim: int, learning_rate: float, mode: str):
         super().__init__()
         self.save_hyperparameters()
         # Poly and Standard NN regression layers
@@ -177,7 +140,7 @@ class PolyModel(pl.LightningModule):
                 # Layer1: Weights = Exponents (shouldnt be negative!)
                 self.l1.weight.uniform_(0., 0.) # Dont initialize negative values. To mitigate nan problem.
                 # Layer2: if mode=="poly": Weigths = Coefficients (Linear comb. of monomials)
-                self.l2.weight.uniform_(-1. / np.sqrt(input_dim), 1. / np.sqrt(input_dim)) # Dont initialize negative values
+                self.l2.weight.uniform_(0., 1. / np.sqrt(input_dim)) # Dont initialize negative values -> can get l1 weight to negative weights!
 
         # Linear regression
         if mode == "linear":
@@ -283,6 +246,59 @@ class PolyModel(pl.LightningModule):
         self.log("metrics/test_r2", r2_score(y_hat, y), prog_bar=True)
         return loss
 
+# %%
+# constant function for y values
+def constantf(x: torch.Tensor, y: torch.FloatTensor=3.) -> torch.Tensor:
+    """
+    Takes array x of shape [obs, dim] as input and outputs constant y
+    in shape [obs, 1].
+    """
+    nobs = x.size(dim=0)
+    y = torch.ones(nobs).reshape(-1, 1) * y
+    return y
+
+# linear function
+def linearf(x: torch.Tensor, slope:float=1., bias: float=0.) -> torch.Tensor:
+    """
+    Takes array x of shape [obs, dim] as input and outputs y
+    in shape [obs, 1].
+    """
+    y = x * slope
+    y = y.sum(axis=1, keepdim=True) + bias # sum across dimension and add single bias
+    return y
+
+# arbitrary polynomial function
+def polynomialf(x: torch.Tensor) -> torch.Tensor:
+    """
+    Takes array x of shape [obs, dim] as input and outputs y
+    in shape [obs, 1].
+    """
+    y = x**3 + 2*x**2 + x + 1
+    y = y.sum(axis=1, keepdim=True) # sum across dimension and add single bias
+    return y
+
+# %%
+# create x values
+def uniform_args(n, d, low, high) -> torch.Tensor():
+    """
+    Create n values of dimension d uniformly between [low, high]
+    Input: n - number of observations
+           d - dimension of observation
+           low/ high - lower/ upper bounds of uniform distr.
+    Output: [n, d] torch.FloatTensor
+    """
+    datamatrix = torch.FloatTensor(n, d).uniform_(low, high)
+    return datamatrix
+
+def linspace_args(n, d, low, high) -> torch.Tensor():
+    """
+    Create (high-low+1) values of dimension 1
+    Input: low - lower bound of linspace
+           high - upper bound of linspace
+    Output: [(high-low+1), 1] torch.FloatTensor
+    """
+    datamatrix = torch.linspace(low, high-1, int((high-low))).view(-1, 1) #
+    return datamatrix
 
 # %%
 # Hyperparameters
@@ -290,14 +306,15 @@ class PolyModel(pl.LightningModule):
 NUM_OBS = 10000
 DIM = 1
 LOW = 0.
-HIGH = 1000.
+HIGH = 10000.
+SAMPLE_FN = linspace_args
 
 # Function to learn ("constantf", "linearf")
-TO_LEARN = "constantf"
-SCALE = False
+TARGET_FN = constantf
+SCALE = True
 
 # Layer architecture
-HIDDEN_DIM = 1      # equal to number of monomials if log/exp are used as activ. f.
+HIDDEN_DIM = 3      # equal to number of monomials if log/exp are used as activ. f.
 
 MODE = "poly" # "poly": uses log+exp activations, "standard": uses sigmoid activation, or "linear" for standard linear regression /w bias
 CUSTOMNOTE = "DEBUGGING"
@@ -306,16 +323,17 @@ CUSTOMNOTE = "DEBUGGING"
 # Learning algo
 BATCH_SIZE = 8
 NUM_EPOCHS = 10
-LEARNING_RATE = 0.01
+LEARNING_RATE = 0.001
 
 # *********************
 dm = MyDataModule(
     batch_size=BATCH_SIZE,
-    n=NUM_OBS,
-    d=DIM,
-    low=LOW,
-    high=HIGH,
-    funct=TO_LEARN,
+    sample_fn=SAMPLE_FN,
+    n=NUM_OBS,  #keyword for sample_fn
+    d=DIM,      #keyword for sample_fn
+    low=LOW,    #keyword for sample_fn
+    high=HIGH,  #keyword for sample_fn
+    target_fn=TARGET_FN,
     scale=SCALE,
 )
 
@@ -328,11 +346,17 @@ model = PolyModel(
 
 logger = pl.loggers.TensorBoardLogger(
     'logs', 
-    name=f'{MODE}.{CUSTOMNOTE}.{TO_LEARN}.low-{int(LOW)}.high-{int(HIGH)}.'\
-    f'nobs-{NUM_OBS}.dim-{DIM}.lrate-{LEARNING_RATE}.scale-{SCALE}',
+    name=f'{MODE}.{CUSTOMNOTE}.{TARGET_FN.__name__}.{SAMPLE_FN.__name__}.low-{int(LOW)}.high-{int(HIGH)}.'\
+    f'nobs-{NUM_OBS}.dim-{DIM}.#monomials-{HIDDEN_DIM}.lrate-{LEARNING_RATE}.scale-{SCALE}',
     default_hp_metric=False,
 
 )
+
+# checkpoint_callback = ModelCheckpoint(
+#     monitor="loss/val_loss",
+#     # filename="best"
+#     )
+
 trainer = pl.Trainer(
     max_epochs=NUM_EPOCHS,
     # default_root_dir='ckpts',
@@ -340,14 +364,72 @@ trainer = pl.Trainer(
     logger=logger,
     log_every_n_steps=100,
     # track_grad_norm=2,
+    # callbacks=checkpoint_callback,
 )
 trainer.fit(model, dm)
 # %%
-# trainer.test(
-#     model, dm
-# )
+# %%
+# Check predictions INSAMPLE
+X_train = dm.X_train
+y_train = dm.y_train
+X_test = dm.X_test
+y_test = dm.y_test
+model.eval()
+with torch.no_grad():
+    y_pred = model(X_test)
+
+# sns.set_theme()
+
+x = torch.cat([X_train, X_test], dim=0)
+x = torch.from_numpy(np.linspace(x.min(), x.max(), 200))
+
+# Create groundtruth over possibly larger domain
+y = TARGET_FN(x)
+
+# Plot training and test predictions
+plt.plot(x, y)
+plt.scatter(X_train, y_train, c="orange", alpha=1., label="train prediction", marker=".")
+plt.scatter(X_test, y_pred, c="green", alpha=0.1, label="test prediction", marker=".")
+plt.legend()
+# plt.autoscale(enable=False)
+plt.show()
+
+#%%
+
+# Check predictions OUT OF SAMPLE
+X_train = dm.X_train
+y_train = dm.y_train
+low = -100.
+high = 20000.
+X_test = torch.linspace(low, high, int((high-low+1))).view(-1, 1)
+y_test = TARGET_FN(X_test)
+if SCALE:
+    X_test = dm.scaler.transform(X_test)
+    X_test = torch.from_numpy(X_test).to(torch.float32)
+# %%
+
+X_test
 
 # %%
+model.eval()
+with torch.no_grad():
+    y_pred = model(X_test)
+
+# sns.set_theme()
+
+x = torch.cat([X_train, X_test], dim=0)
+x = torch.from_numpy(np.linspace(x.min(), x.max(), 200))
+
+# Create groundtruth over possibly larger domain
+y = TARGET_FN(x)
+
+# Plot training and test predictions
+plt.plot(x, y)
+plt.scatter(X_train, y_train, c="orange", alpha=1., label="train prediction", marker=".")
+plt.scatter(X_test, y_pred, c="green", alpha=0.1, label="test prediction", marker=".")
+plt.legend()
+# plt.autoscale(enable=False)
+plt.show()
 
 
 
