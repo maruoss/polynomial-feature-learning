@@ -33,16 +33,17 @@ def compute_test_accuracy(model, val_loader, loss_fn, device):
 
 
 def gen_func(x):
-    y =  7*(x**3) - 20*(x**2) + 4*x + 200
+    y =  5*(x**4) + 2
     return y
 
 def gen_data():
-    mylen = 10000
+    mylen = 1000
     x_train =  np.reshape(np.arange(0, mylen)/mylen, (-1, 1))
     y_train =  gen_func(x_train)
     return x_train, y_train
 
-polyrank = 7
+nrmonomials = 4
+nrvariables = 1
 print("Starting")
 x_train, y_train = gen_data()
 print("Generated data")
@@ -66,18 +67,22 @@ x_val = torch.tensor(x_val, device=device, dtype=torch.float).to(device)
 y_val = torch.tensor(y_val, device=device, dtype=torch.float).to(device)
 
 print("tensorification complete")
-print(x_train)
+# print(x_train)
 
 batch_size = 64
 train_loader = torch.utils.data.DataLoader(dataset=torch.utils.data.TensorDataset(x_train, y_train), batch_size=batch_size, shuffle=True)
 validation_loader = torch.utils.data.DataLoader(dataset=torch.utils.data.TensorDataset(x_val, y_val), batch_size=batch_size, shuffle=False)
 
-model = Model.MyModel(polyrank).to(device)
+model = Model.MyModel(nrmonomials, nrvariables).to(device)
 
 loss_fn = torch.nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.0005)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
 
-epochs = 500
+epochs = 50000
+
+layer1weights = []
+layer2weights = []
+trainlosses = []
 
 def train(model, train_loader, validation_loader, epochs, device):
     for epoch in range(epochs):
@@ -89,32 +94,77 @@ def train(model, train_loader, validation_loader, epochs, device):
             optimizer.zero_grad()
             out = model(x)
             # print(out.squeeze().shape, label.squeeze().shape)
-            loss = loss_fn(out.squeeze(), label.squeeze())
+            all_linear2_params = torch.cat([x.view(-1) for x in model.lin2.parameters()])
+            all_linear3_params = torch.cat([x.view(-1) for x in model.lin3.parameters()])
+            l1_regularization = (0.01 * torch.norm(all_linear2_params, 1))+(0.01 * torch.norm(all_linear3_params, 1))
+            loss = loss_fn(out.squeeze(), label.squeeze()) + l1_regularization
             loss.backward()
             optimizer.step()
             iteration_loss += loss.item()
 
+        layer1weights.append(model.layers[1].weight.cpu().detach())
+        layer2weights.append(model.layers[3].weight[0].cpu().detach())
+        train_loss = iteration_loss/len(train_loader)
+        trainlosses.append(train_loss)
         print(f'Epoch {epoch + 1}/{epochs}, ' \
-                  f'Train Loss: {iteration_loss / len(train_loader):.3f}, ' \
-                  f'Test Loss: {compute_test_accuracy(model, validation_loader, loss_fn, device):.1f}')
+                  f'Train Loss: {train_loss:.6f}, ' \
+                  f'Test Loss: {compute_test_accuracy(model, validation_loader, loss_fn, device):.6f}')
 
 
 print("training started", flush=True)
 train(model, train_loader, validation_loader, epochs, device)
 results = model(x_train_orig).cpu().detach()
-print(results)
-pyplot.plot(x_train_orig. cpu().detach(), results, '--bo', label = "prediction")
-pyplot.plot(x_train_orig.cpu().detach(), y_train_orig, '--ro', label = "ground truth")
-pyplot.legend()
+# print(results)
 
-weights = []
-biases = []
-weights.append(model.layers[0].weight)
-weights.append(model.layers[2].weight)
-biases.append(model.layers[0].bias)
-biases.append(model.layers[2].bias)
-print("Weights:")
-print(weights)
-print("Biases:")
-print(biases)
+bias = model.layers[3].bias
+print("Bias:")
+print(bias)
+
+# Plotting
+figure, axis = pyplot.subplots(2, 2)
+axis[0, 0].plot(x_train_orig.cpu().detach(), results, label="prediction")
+axis[0, 0].plot(x_train_orig.cpu().detach(), y_train_orig, label="ground truth")
+axis[0, 0].legend()
+axis[0, 0].set_title("Prediction")
+
+axis[0, 1].plot(trainlosses, label="training loss")
+axis[0, 1].legend()
+axis[0, 1].set_title("Prediction")
+
+
+exponentsbyepoch = []
+for i in range(0, nrmonomials):
+    exponents = []
+    for entry in layer1weights:
+        exponents.append(entry[i])
+    exponentsbyepoch.append(exponents)
+
+coeffsbyepoch = []
+for i in range(0, nrmonomials):
+    coeffs = []
+    for entry in layer2weights:
+        coeffs.append(entry[i])
+    coeffsbyepoch.append(coeffs)
+
+for i in range(0, nrmonomials):
+    axis[1, 0].plot(exponentsbyepoch[i], label=("exponent " + str(i)))
+axis[1, 0].legend()
+axis[1, 0].set_title("Exponents")
+
+for i in range(0, nrmonomials):
+    axis[1, 1].plot(coeffsbyepoch[i], label=("coefficient " + str(i)))
+axis[1, 1].legend()
+axis[1, 1].set_title("Coefficients")
+
 pyplot.show()
+
+
+
+# Explainability: Check with large nr of polynomials plus noise, does it still give approx the right polynomial?
+# Data set size: Try with very small dataset as input
+# Input domain: What happens when we have negative inputs, do we still learn?
+# Experiment with some real datasets. Performance?
+
+# My part:
+# 1) check results at high epoch numbers. convergence to actual polynomial?
+# 2) Experiment with what happens when we have negative inputs, and also check real datasets, using different numbers of monomials (e.g. housing prices).
