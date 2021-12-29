@@ -23,9 +23,10 @@ class predictions:
         self.show_orig_scale = show_orig_scale
         self.scale = scale
         self.device = model.device # in trainer will be cuda, outside will be cpu
+        # self.oos = oos
 
         if oos:
-            self.X_test = torch.linspace(low_oos, high_oos, int((high_oos-low_oos+1))).view(-1, 1)
+            self.X_test = torch.linspace(low_oos, high_oos, 200).view(-1, 1)
             self.y_test = target_fn(self.X_test)
             if self.scale:
                 self.X_test = self.dm.scaler.transform(self.X_test)
@@ -54,15 +55,15 @@ class predictions:
             self.X_test = torch.from_numpy(self.X_test).to(torch.float32)
 
         x = torch.cat([self.X_train, self.X_test], dim=0)
-        x = torch.from_numpy(np.linspace(x.min(), x.max(), 200))
+        x = torch.from_numpy(np.linspace(x.min(), x.max(), 200)).view(-1, 1) # linearf/ polynf expect this shape for .sum()
 
         # Create groundtruth over possibly larger domain
         y = self.target_fn(x)
         
 
         plt.plot(x, y)
-        plt.scatter(self.X_train, self.y_pred_train.cpu(), c="orange", alpha=1., label="train prediction", marker=".")
-        plt.scatter(self.X_test, self.y_pred_test.cpu(), c="green", alpha=0.5, label="test prediction", marker=".")
+        plt.scatter(self.X_train, self.y_pred_train.cpu(), c="orange", alpha=1., label="train prediction", marker=".", zorder=10.) #zorder defines which points have priority
+        plt.scatter(self.X_test, self.y_pred_test.cpu(), c="green", alpha=0.5, label="test prediction", marker=".", zorder=5.)
         plt.legend()
         # plt.autoscale(enable=False)
         plt.show()

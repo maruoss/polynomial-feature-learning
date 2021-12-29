@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader
@@ -31,7 +32,7 @@ class MyDataModule(pl.LightningDataModule):
                 train_size=0.8, shuffle=True)
         
         if self.scale:
-            self.scaler = MinMaxScaler(feature_range=(0.1, 1)) # SET SCALE RANGE -> 0 IS NOT SUITABLE FOR LN transform -> -inf
+            self.scaler = MinMaxScaler(feature_range=(1, np.exp(1))) # SET SCALE RANGE -> 0 IS NOT SUITABLE FOR LN transform -> -inf
             assert self.X_train.dtype == self.X_val.dtype == self.X_test.dtype
             datatype = self.X_train.dtype
             # Scale train, val, testset

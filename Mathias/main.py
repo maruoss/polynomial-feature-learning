@@ -60,7 +60,10 @@ def linearf(x: torch.Tensor, slope:float=1., bias: float=0.) -> torch.Tensor:
     in shape [obs, 1].
     """
     y = x * slope
-    y = y.sum(axis=1, keepdim=True) + bias # sum across dimension and add single bias
+    if hasattr(y, "shape"):
+        if len(y.shape) == 1:
+            y = y.view(-1, 1)
+        y = y.sum(axis=1, keepdim=True) + bias # sum across dimension and add single bias
     return y
 
 # arbitrary polynomial function
@@ -69,8 +72,11 @@ def polynomialf(x: torch.Tensor) -> torch.Tensor:
     Takes array x of shape [obs, dim] as input and outputs y
     in shape [obs, 1].
     """
-    y = x**3 + 2*x**2 + x + 1
-    y = y.sum(axis=1, keepdim=True) # sum across dimension and add single bias
+    y = 0.2*x**3 - 1.5*x**2 + 3.6*x - 2.5
+    if hasattr(y, "shape"):
+        if len(y.shape) == 1:
+            y = y.view(-1, 1)
+        y = y.sum(axis=1, keepdim=True) # sum across dimension and add single bias
     return y
 
 # %%
@@ -106,7 +112,8 @@ def linspace_args(n, d, low, high) -> torch.Tensor():
            high - upper bound of linspace
     Output: [(high-low+1), 1] torch.FloatTensor
     """
-    datamatrix = torch.linspace(low, high-1, int((high-low))).view(-1, 1) #
+    # datamatrix = torch.linspace(low, high-1, int((high-low))).view(-1, 1) #
+    datamatrix = torch.linspace(low, high, n).view(-1, 1) #
     return datamatrix
 
 # %% Unit test
@@ -128,34 +135,36 @@ def linspace_args(n, d, low, high) -> torch.Tensor():
 
 # %%
 # Hyperparameters
-# Synthetic data X of shape [NUM_OBS, DIM] with values unif. cont. between LOW and HIGH
-NUM_OBS = 10000
+# Synthetic data X of shape [NUM_OBS, DIM]
+NUM_OBS = 2000 # not used for linspace args
 DIM = 1
-LOW = 5.
-HIGH = 10.
-SAMPLE_FN = uniform_args
+LOW = 2. #mean for normal_args
+HIGH = 0.5 #sd for normal_args
+SAMPLE_FN = normal_args
 
 # Function to learn ("constantf", "linearf")
-TARGET_FN = constantf
+TARGET_FN = polynomialf
 SCALE = False
 
 # Layer architecture
-HIDDEN_DIM = 2      # equal to number of monomials if log/exp are used as activ. f.
+HIDDEN_DIM = 3      # equal to number of monomials if log/exp are used as activ. f.
 
 MODE = "poly" # "poly": uses log+exp activations, "standard": uses sigmoid activation, or "linear" for standard linear regression /w bias
 CUSTOMNOTE = "DEBUGGING"
 # output_dim = 1
 
 # Learning algo
-BATCH_SIZE = 8
-NUM_EPOCHS = 10
-LEARNING_RATE = 0.01
+BATCH_SIZE = 128
+NUM_EPOCHS = 100
+LEARNING_RATE = 0.05
 
-# Plotting options
+# Plotting options, oos = to plot testing out-of-sample points
 OOS = True
 LOW_OOS = 0.
-HIGH_OOS = 10.
+HIGH_OOS = 5.
 SHOW_ORIG_SCALE = False
+TO_PLOT = False  # Deactivate when tuning LR
+PLOT_EVERY = 100
 
 # *********************
 dm = MyDataModule(
@@ -181,6 +190,8 @@ model = PolyModel(
     oos=OOS,
     target_fn=TARGET_FN,
     show_orig_scale=SHOW_ORIG_SCALE,
+    to_plot=TO_PLOT,
+    plot_every= PLOT_EVERY,
 )
 
 logger = pl.loggers.TensorBoardLogger(
@@ -201,12 +212,22 @@ trainer = pl.Trainer(
     # default_root_dir='ckpts',
     gpus=1,
     logger=logger,
-    log_every_n_steps=100,
+    log_every_n_steps=1,
     # track_grad_norm=2,
     # callbacks=checkpoint_callback,
 )
+
 trainer.fit(model, dm)
 
+# Run learning rate finder
+# lr_finder = trainer.tuner.lr_find(model, dm)
+
+# # Results can be found in
+# lr_finder.results
+
+# # Plot with
+# fig = lr_finder.plot(suggest=True)
+# fig.show()
 
 
 
@@ -218,15 +239,37 @@ trainer.test(
 # %%
 # Plotter settings
 from plotter import predictions
-plotter = predictions(dm, model, low_oos=4., high_oos=15., scale=SCALE, oos=True, target_fn=TARGET_FN, 
-                        show_orig_scale=SCALE) 
+plotter = predictions(dm, model, low_oos=0., high_oos=5., scale=SCALE, oos=True, target_fn=TARGET_FN, 
+                        show_orig_scale=True)
 plotter.plot()
 
 # print(f"X_test: {plotter.X_test}")
-print(f"y_pred_test: {plotter.y_pred_test}")
+# print(f"y_pred_test: {plotter.y_pred_test}")
 
 
+#%%%
+# Plot LAYER 1 WEIGHT/ EXPONENTS
+for i in range(model.layer1weights.shape[-1]-1): # minus index (training step) column in last column
+    ind = model.layer1weights.shape[-1] - 1
+    plt.plot(model.layer1weights[:, ind].cpu(), model.layer1weights[:, i].cpu())
+    if TARGET_FN == constantf:
+        plt.axhline(0, label='Target Rank', c="red", ls="--")
+    if TARGET_FN == linearf:
+        plt.axhline(1, label='Target Rank', c="red", ls="--")
+    if TARGET_FN == polynomialf:
+        plt.axhline(3, label='Target Rank', c="red", ls="--") #rank 3 monomial
+        plt.axhline(2, label='Target Rank', c="red", ls="--") #rank 2 monomial
+        plt.axhline(1, label='Target Rank', c="red", ls="--")      
+        plt.axhline(0, label='Target Rank', c="red", ls="--")   
+
+print(model.layer1weights)
 # %%
+
+# plt.plot(model.layer1weights[:, 2].cpu(), model.layer1weights[:, 1].cpu())
+# plt.plot(model.layer1weights[:, 2].cpu(), model.layer1weights[:, 0].cpu())
+
+
+
 # def main(args):
 #     model = PolyModel()
 #     trainer = Trainer.from_argparse_args(args)
