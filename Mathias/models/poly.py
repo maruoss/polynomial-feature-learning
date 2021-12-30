@@ -55,7 +55,7 @@ class PolyModel(pl.LightningModule):
         return self.l2(torch.exp(self.l1(torch.log(x.view(x.size(0), -1)))))
 
     def configure_optimizers(self):
-        return torch.optim.SGD(self.parameters(), lr=self.hparams.learning_rate, momentum=0.8, nesterov=True)
+        return torch.optim.SGD(self.parameters(), lr=self.hparams.learning_rate, momentum=0.9, nesterov=True)
 
     def configure_gradient_clipping(self, optimizer, optimizer_idx, gradient_clip_val, gradient_clip_algorithm):
         # # Clip gradients of exponents and coefficients together

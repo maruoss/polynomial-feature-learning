@@ -169,7 +169,7 @@ CUSTOMNOTE = "DEBUGGING"
 # Learning algo
 BATCH_SIZE = 128
 NUM_EPOCHS = 100000
-LEARNING_RATE = 0.05
+LEARNING_RATE = 1e-4
 
 # Plotting options, oos = to plot testing out-of-sample points
 OOS = True
@@ -216,9 +216,10 @@ logger = pl.loggers.TensorBoardLogger(
 
 checkpoint_callback = ModelCheckpoint(
     monitor="loss/val_loss",
-    filename="'{epoch}-{val_loss:.6f}",
+    filename="epoch={epoch:02d}-val_loss={loss/val_loss:.6f}",
     every_n_epochs=1000,
-    save_last=True
+    save_last=True,
+    auto_insert_metric_name=False #to prevent {loss/val_loss} from creating subfolders because of /
     )
 
 trainer = pl.Trainer(
