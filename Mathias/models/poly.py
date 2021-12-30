@@ -124,15 +124,15 @@ class PolyModel(pl.LightningModule):
 
     def on_validation_epoch_end(self):
         # Log exponents, coefficients and biases
-        exponents = self.get_exponents()
+        exponents = self.get_exponents() #column vector [n, 1]
         for i in range(len(exponents)):
-            self.log(f"exponent.#{i+1}", exponents[i, :].item(), prog_bar=True)
-        coefficients = self.get_coefficients()
+            self.log(f"exponent/#{i+1}", exponents[i, :].item(), prog_bar=True)
+        coefficients = self.get_coefficients() #column vector [n, 1]
         for i in range(len(coefficients)):
-            self.log(f"coefficient.#{i+1}", coefficients[i, :].item(), prog_bar=True)
-        bias = self.get_bias()
+            self.log(f"coefficient/#{i+1}", coefficients[i, :].item(), prog_bar=True)
+        bias = self.get_bias() #column vector [n, 1]
         for i in range(len(bias)):
-            self.log(f"bias.#{i+1}", bias[i, :].item(), prog_bar=True)
+            self.log(f"bias/#{i+1}", bias[i, :].item(), prog_bar=True)
         
         # Plot predictions, exponents and coefficients
         if self.hparams.to_plot:
