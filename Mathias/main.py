@@ -1,6 +1,7 @@
 # %%
 import time
 import numpy as np
+from pytorch_lightning import profiler
 import torch
 import pytorch_lightning as pl
 from pytorch_lightning import seed_everything
@@ -15,7 +16,9 @@ import pdb
 
 # files
 from plotter import predictions
-from models.polymodel import PolyModel
+from models.poly import PolyModel
+from models.linear import LinearModel
+from models.standard import StandardModel
 from datamodule import MyDataModule
 
 # %%
@@ -136,7 +139,7 @@ def linspace_args(n, d, low, high) -> torch.Tensor():
 # %%
 # Hyperparameters
 # Synthetic data X of shape [NUM_OBS, DIM]
-NUM_OBS = 2000 # not used for linspace args
+NUM_OBS = 1600 # not used for linspace args
 DIM = 1
 LOW = 2. #mean for normal_args
 HIGH = 0.5 #sd for normal_args
@@ -149,13 +152,13 @@ SCALE = False
 # Layer architecture
 HIDDEN_DIM = 3      # equal to number of monomials if log/exp are used as activ. f.
 
-MODE = "poly" # "poly": uses log+exp activations, "standard": uses sigmoid activation, or "linear" for standard linear regression /w bias
+# MODE = "poly" # "poly": uses log+exp activations, "standard": uses sigmoid activation, or "linear" for standard linear regression /w bias
 CUSTOMNOTE = "DEBUGGING"
 # output_dim = 1
 
 # Learning algo
 BATCH_SIZE = 128
-NUM_EPOCHS = 100
+NUM_EPOCHS = 100000
 LEARNING_RATE = 0.05
 
 # Plotting options, oos = to plot testing out-of-sample points
@@ -164,7 +167,7 @@ LOW_OOS = 0.
 HIGH_OOS = 5.
 SHOW_ORIG_SCALE = False
 TO_PLOT = False  # Deactivate when tuning LR
-PLOT_EVERY = 100
+# PLOT_EVERY = 10
 
 # *********************
 dm = MyDataModule(
@@ -177,12 +180,11 @@ dm = MyDataModule(
     target_fn=TARGET_FN,
     scale=SCALE,
 )
-
+# Choose: PolyModel, StandardModel or LinearModel
 model = PolyModel(
     input_dim=DIM,
     hidden_dim=HIDDEN_DIM,
     learning_rate=LEARNING_RATE,
-    mode=MODE,
     datamodule=dm,
     low_oos=LOW_OOS,
     high_oos=HIGH_OOS,
@@ -191,30 +193,36 @@ model = PolyModel(
     target_fn=TARGET_FN,
     show_orig_scale=SHOW_ORIG_SCALE,
     to_plot=TO_PLOT,
-    plot_every= PLOT_EVERY,
+    # plot_every= PLOT_EVERY,
 )
 
 logger = pl.loggers.TensorBoardLogger(
     'logs', 
-    name=f'{MODE}.{CUSTOMNOTE}.{TARGET_FN.__name__}.{SAMPLE_FN.__name__}.low-{int(LOW)}.high-{int(HIGH)}.'\
+    name=f'{CUSTOMNOTE}.{TARGET_FN.__name__}.{SAMPLE_FN.__name__}.low-{int(LOW)}.high-{int(HIGH)}.'\
     f'nobs-{NUM_OBS}.dim-{DIM}.#monomials-{HIDDEN_DIM}.lrate-{LEARNING_RATE}.batchsize-{BATCH_SIZE}.scale-{SCALE}',
     default_hp_metric=False,
 
 )
 
-# checkpoint_callback = ModelCheckpoint(
-#     monitor="loss/val_loss",
-#     # filename="best"
-#     )
+checkpoint_callback = ModelCheckpoint(
+    monitor="loss/val_loss",
+    filename="'{epoch}-{val_loss:.6f}",
+    every_n_epochs=1000,
+    save_last=True
+    )
 
 trainer = pl.Trainer(
     max_epochs=NUM_EPOCHS,
     # default_root_dir='ckpts',
     gpus=1,
-    logger=logger,
-    log_every_n_steps=1,
+    logger=logger, #=logger or False
+    # log_every_n_steps=1,
+    # flush_logs_every_n_steps=50000,
+    check_val_every_n_epoch=100,
     # track_grad_norm=2,
-    # callbacks=checkpoint_callback,
+    callbacks=checkpoint_callback,
+    num_sanity_val_steps=0,
+    profiler="simple",
 )
 
 trainer.fit(model, dm)
@@ -249,9 +257,9 @@ plotter.plot()
 
 #%%%
 # Plot LAYER 1 WEIGHT/ EXPONENTS
-for i in range(model.layer1weights.shape[-1]-1): # minus index (training step) column in last column
-    ind = model.layer1weights.shape[-1] - 1
-    plt.plot(model.layer1weights[:, ind].cpu(), model.layer1weights[:, i].cpu())
+exponents = np.stack(model.exponent_path).squeeze(axis=-1)
+for i in range(exponents.shape[-1]): # minus index (training step) column in last column
+    plt.plot(exponents[:, i])
     if TARGET_FN == constantf:
         plt.axhline(0, label='Target Rank', c="red", ls="--")
     if TARGET_FN == linearf:
@@ -262,7 +270,7 @@ for i in range(model.layer1weights.shape[-1]-1): # minus index (training step) c
         plt.axhline(1, label='Target Rank', c="red", ls="--")      
         plt.axhline(0, label='Target Rank', c="red", ls="--")   
 
-print(model.layer1weights)
+# print(exponents)
 # %%
 
 # plt.plot(model.layer1weights[:, 2].cpu(), model.layer1weights[:, 1].cpu())
