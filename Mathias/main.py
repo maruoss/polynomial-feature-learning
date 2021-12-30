@@ -120,6 +120,15 @@ def linspace_args(n, d, low, high) -> torch.Tensor():
     datamatrix = torch.linspace(low, high, n).view(-1, 1) #
     return datamatrix
 
+def truncated_normal(n, d, min_val=1., low=0., high=1.):
+    mean = low
+    std = high
+    normal_sample = lambda: torch.normal(mean, std, (n,))
+    x = normal_sample()
+    while (x < min_val).any():
+        x_new = normal_sample()
+        x[x < min_val] = x_new[x < min_val]
+    return x.view(-1, 1) # Mathias adjustment, only for 1D
 # %% Unit test
 # Create dataset and groundtruths
 # X = normal_args(n=3, d=2, low=0, high=1)
@@ -144,7 +153,7 @@ NUM_OBS = 1600 # not used for linspace args
 DIM = 1
 LOW = 2. #mean for normal_args
 HIGH = 0.5 #sd for normal_args
-SAMPLE_FN = normal_args
+SAMPLE_FN = truncated_normal
 
 # Function to learn ("constantf", "linearf")
 TARGET_FN = polynomialf
