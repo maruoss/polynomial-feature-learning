@@ -149,10 +149,10 @@ def truncated_normal(n, d, min_val=1., low=0., high=1.):
 # %%
 # Hyperparameters
 # Synthetic data X of shape [NUM_OBS, DIM]
-NUM_OBS = 1600 # not used for linspace args
+NUM_OBS = 1600 # not used for linspace args [multiply by 0.64 for training size, 1600 -> 1024 training size]
 DIM = 1
-LOW = 2. #mean for normal_args
-HIGH = 0.5 #sd for normal_args
+LOW = 2.5 #=MEAN for normal_args
+HIGH = 1.0 #=SD for normal_args
 SAMPLE_FN = truncated_normal
 
 # Function to learn ("constantf", "linearf")
@@ -168,16 +168,18 @@ CUSTOMNOTE = "DEBUGGING"
 
 # Learning algo
 BATCH_SIZE = 128
-NUM_EPOCHS = 100000
+NUM_EPOCHS = 2000000
 LEARNING_RATE = 1e-4
 
 # Plotting options, oos = to plot testing out-of-sample points
 OOS = True
-LOW_OOS = 0.
-HIGH_OOS = 5.
-SHOW_ORIG_SCALE = False
-TO_PLOT = False  # Deactivate when tuning LR
-# PLOT_EVERY = 10
+LOW_OOS = 0. #only affects plots, needs oos=True
+HIGH_OOS = 7. #only affects plots, needs oos=True
+SHOW_ORIG_SCALE = False # #only affects plots, SCALE has to be True to have an effect
+
+# CHECKPOINTS + SAVING PLOTS
+PLOT_EVERY_N_EPOCHS = 200000 # has to be a multiple of "check_val_every_n_epoch"
+TO_SAVE_PLOTS = True # whether to save plots to disk
 
 # *********************
 dm = MyDataModule(
@@ -196,19 +198,19 @@ model = PolyModel(
     hidden_dim=HIDDEN_DIM,
     learning_rate=LEARNING_RATE,
     datamodule=dm,
-    low_oos=LOW_OOS,
-    high_oos=HIGH_OOS,
+    low_oos=LOW_OOS, 
+    high_oos=HIGH_OOS, 
     scale=SCALE,
-    oos=OOS,
+    oos=OOS, 
     target_fn=TARGET_FN,
-    show_orig_scale=SHOW_ORIG_SCALE,
-    to_plot=TO_PLOT,
-    # plot_every= PLOT_EVERY,
+    show_orig_scale=SHOW_ORIG_SCALE, 
+    plot_every_n_epochs=PLOT_EVERY_N_EPOCHS,
+    to_save_plots=TO_SAVE_PLOTS,
 )
 
 logger = pl.loggers.TensorBoardLogger(
     'logs', 
-    name=f'{CUSTOMNOTE}.{TARGET_FN.__name__}.{SAMPLE_FN.__name__}.low-{int(LOW)}.high-{int(HIGH)}.'\
+    name=f'{CUSTOMNOTE}.{TARGET_FN.__name__}.{SAMPLE_FN.__name__}.low-{LOW}.high-{HIGH}.'\
     f'nobs-{NUM_OBS}.dim-{DIM}.#monomials-{HIDDEN_DIM}.lrate-{LEARNING_RATE}.batchsize-{BATCH_SIZE}.scale-{SCALE}',
     default_hp_metric=False,
 
@@ -229,7 +231,7 @@ trainer = pl.Trainer(
     logger=logger, #=logger or False
     # log_every_n_steps=1,
     # flush_logs_every_n_steps=50000,
-    check_val_every_n_epoch=100,
+    check_val_every_n_epoch=1000,
     # track_grad_norm=2,
     callbacks=checkpoint_callback, #default is after each training epoch
     num_sanity_val_steps=0,
@@ -238,6 +240,7 @@ trainer = pl.Trainer(
 
 trainer.fit(model, dm)
 
+# %%
 # Run learning rate finder
 # lr_finder = trainer.tuner.lr_find(model, dm)
 
@@ -263,7 +266,7 @@ plotter = predictions(dm, model, low_oos=0., high_oos=5., scale=SCALE, oos=True,
 fig = plt.figure(figsize=(7, 5))
 plotter.plot()
 plt.tight_layout()
-path = os.path.join(logger.log_dir, f"predictions_{NUM_EPOCHS}.png")
+path = os.path.join(logger.log_dir, f"final_predictions_{NUM_EPOCHS}.png")
 plt.savefig(path, facecolor="white")
 plt.show()
 
@@ -320,7 +323,7 @@ ax[1].legend()
 
 
 # Save figure
-path = os.path.join(logger.log_dir, f"exponents_coefficients_{NUM_EPOCHS}.png")
+path = os.path.join(logger.log_dir, f"final_exponents_coefficients_{NUM_EPOCHS}.png")
 plt.savefig(path, facecolor="white")
 plt.show()
 
