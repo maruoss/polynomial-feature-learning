@@ -61,10 +61,11 @@ class predictions:
         y = self.target_fn(x)
         
 
-        plt.plot(x, y)
+        plt.plot(x, y, label="groundtruth")
         plt.scatter(self.X_train, self.y_pred_train.cpu(), c="orange", alpha=1., label="train prediction", marker=".", zorder=10.) #zorder defines which points have priority
         plt.scatter(self.X_test, self.y_pred_test.cpu(), c="green", alpha=0.5, label="test prediction", marker=".", zorder=5.)
+        plt.xlabel("x")
+        plt.ylabel("y")
         plt.legend()
-        # plt.autoscale(enable=False)
-        plt.show()
-        
+        # plt.autoscale(enable=False) # to autoscale axes if difference gets small
+        # plt.show() # plt.show() before plt.savefig saves empty figure

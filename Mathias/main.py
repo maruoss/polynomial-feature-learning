@@ -13,6 +13,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from numpy.random import default_rng
 import pdb
+import os
 
 # files
 from plotter import predictions
@@ -220,9 +221,9 @@ trainer = pl.Trainer(
     # flush_logs_every_n_steps=50000,
     check_val_every_n_epoch=100,
     # track_grad_norm=2,
-    callbacks=checkpoint_callback,
+    callbacks=checkpoint_callback, #default is after each training epoch
     num_sanity_val_steps=0,
-    profiler="simple",
+    # profiler="simple",
 )
 
 trainer.fit(model, dm)
@@ -245,30 +246,97 @@ trainer.test(
 )
 
 # %%
-# Plotter settings
+# Show predictions and save plot
 from plotter import predictions
 plotter = predictions(dm, model, low_oos=0., high_oos=5., scale=SCALE, oos=True, target_fn=TARGET_FN, 
                         show_orig_scale=True)
+fig = plt.figure(figsize=(7, 5))
 plotter.plot()
+plt.tight_layout()
+path = os.path.join(logger.log_dir, f"predictions_{NUM_EPOCHS}.png")
+plt.savefig(path, facecolor="white")
+plt.show()
 
 # print(f"X_test: {plotter.X_test}")
 # print(f"y_pred_test: {plotter.y_pred_test}")
 
-
 #%%%
-# Plot LAYER 1 WEIGHT/ EXPONENTS
-exponents = np.stack(model.exponent_path).squeeze(axis=-1)
-for i in range(exponents.shape[-1]): # minus index (training step) column in last column
-    plt.plot(exponents[:, i])
-    if TARGET_FN == constantf:
-        plt.axhline(0, label='Target Rank', c="red", ls="--")
-    if TARGET_FN == linearf:
-        plt.axhline(1, label='Target Rank', c="red", ls="--")
-    if TARGET_FN == polynomialf:
-        plt.axhline(3, label='Target Rank', c="red", ls="--") #rank 3 monomial
-        plt.axhline(2, label='Target Rank', c="red", ls="--") #rank 2 monomial
-        plt.axhline(1, label='Target Rank', c="red", ls="--")      
-        plt.axhline(0, label='Target Rank', c="red", ls="--")   
+# Show plot LAYER 1 WEIGHT/ EXPONENTS and save
+exponent_path = np.stack(model.exponent_path).squeeze(-1) #shape(2, 3)
+coefficient_path = np.stack(model.coefficient_path).squeeze(-1) # shape (2, 3)
+bias_path = np.stack(model.bias_path).squeeze(-1) # shape (2, 1)
+
+# Sort from lowest to largest exponent
+ind = np.argsort(exponent_path[-1])
+exponent_path = exponent_path[:, ind]
+coefficient_path = coefficient_path[:, ind]
+coefficient_path = np.hstack([bias_path, coefficient_path])
+
+# Prepare for plotting
+fig, ax = plt.subplots(1, 2, figsize = (14, 5))
+prop_cycle = plt.rcParams['axes.prop_cycle']
+colors = prop_cycle.by_key()['color']
+
+# coefficients
+coefficients = np.array([2, -15, 36, -25]) / 10
+
+# Plot the exponents path
+for i, path in enumerate(exponent_path.T):
+    label = "Target Exponents" if i == 0 else None
+    ax[0].plot(np.full(NUM_EPOCHS+1, i+1), label=label, c=colors[i], ls="--")
+    label = "Learned exponents" if i == 0 else None
+    ax[0].plot(path, label=label, c=colors[i])
+
+plot_bottom = ax[0].get_ylim()[0]
+if plot_bottom > 0:
+    ax[0].set_ylim(0)
+        
+ax[0].set_title("Learned Exponent Paths")
+ax[0].set_xlabel("Epoch")
+ax[0].set_ylabel("Exponent Value")
+ax[0].legend()
+
+# Plot the coefficient paths
+for degree, (coefficient, path) in enumerate(zip(coefficients[::-1], coefficient_path.T)):
+    label = "Target coefficient" if degree == 0 else None
+    ax[1].plot(np.full(NUM_EPOCHS+1, coefficient), label=label, c=colors[degree], ls="--")
+    label = f"Learned {degree}-th degree coefficient"
+    ax[1].plot(path, label=label, c=colors[degree])
+        
+ax[1].set_title("Learned Coefficient Paths")
+ax[1].set_xlabel("Epoch")
+ax[1].set_ylabel("Coefficient Value")
+ax[1].legend()
+
+
+# Save figure
+path = os.path.join(logger.log_dir, f"exponents_coefficients_{NUM_EPOCHS}.png")
+plt.savefig(path, facecolor="white")
+plt.show()
+
+
+
+
+# %%
+# fig = plt.figure(figsize=(7, 5))
+# exponents = np.stack(model.exponent_path).squeeze(axis=-1)
+# for i in range(exponents.shape[-1]): # minus index (training step) column in last column
+#     plt.plot(exponents[:, i])
+#     if TARGET_FN == constantf:
+#         plt.axhline(0, label='Target Rank', c="red", ls="--")
+#     if TARGET_FN == linearf:
+#         plt.axhline(1, label='Target Rank', c="red", ls="--")
+#     if TARGET_FN == polynomialf:
+#         plt.axhline(3, label='Target Rank', c="red", ls="--") #rank 3 monomial
+#         plt.axhline(2, label='Target Rank', c="red", ls="--") #rank 2 monomial
+#         plt.axhline(1, label='Target Rank', c="red", ls="--")      
+#         # plt.axhline(0, label='Target Rank', c="red", ls="--")
+# plt.title("Learned Exponent Paths")
+# plt.xlabel("Epoch")
+# plt.ylabel("Exponent Value")
+# plt.tight_layout()
+# os.makedirs('plots', exist_ok=True)
+# plt.savefig("plots/exponents_plot.png", facecolor="white")
 
 # print(exponents)
 # %%
