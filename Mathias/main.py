@@ -83,6 +83,18 @@ def polynomialf(x: torch.Tensor) -> torch.Tensor:
         y = y.sum(axis=1, keepdim=True) # sum across dimension and add single bias
     return y
 
+def sinf(x: torch.Tensor) -> torch.Tensor:
+    """
+    Takes array x of shape [obs, dim] as input and outputs y
+    in shape [obs, 1].
+    """
+    y = torch.sin(x)
+    if hasattr(y, "shape"):
+        if len(y.shape) == 1:
+            y = y.view(-1, 1)
+        y = y.sum(axis=1, keepdim=True) # sum across dimension and add single bias
+    return y
+
 # %%
 # create x values
 def uniform_args(n, d, low, high) -> torch.Tensor():
@@ -156,11 +168,11 @@ HIGH = 1.0 #=SD for normal_args
 SAMPLE_FN = truncated_normal
 
 # Function to learn ("constantf", "linearf")
-TARGET_FN = polynomialf
+TARGET_FN = sinf
 SCALE = False
 
 # Layer architecture
-HIDDEN_DIM = 3      # equal to number of monomials if log/exp are used as activ. f.
+HIDDEN_DIM = 10      # equal to number of monomials if log/exp are used as activ. f.
 
 # MODE = "poly" # "poly": uses log+exp activations, "standard": uses sigmoid activation, or "linear" for standard linear regression /w bias
 CUSTOMNOTE = "DEBUGGING"

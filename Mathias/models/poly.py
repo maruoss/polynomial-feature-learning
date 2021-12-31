@@ -51,6 +51,11 @@ class PolyModel(pl.LightningModule):
     def get_bias(self):
         return self.l2.bias.detach().cpu().numpy().reshape(-1, 1)
 
+    def force_non_negative_exponents_(self):
+        with torch.no_grad():
+            self.l1.weight.clamp_(0.)
+
+
     def forward(self, x):
         # return self.l2(torch.exp(self.l1(torch.log(self.l0(x.view(x.size(0), -1))))))
         return self.l2(torch.exp(self.l1(torch.log(x.view(x.size(0), -1)))))
@@ -86,6 +91,10 @@ class PolyModel(pl.LightningModule):
 
         return loss
 
+    def on_train_batch_end(self, outputs, batch, batch_idx, unused = 0):
+        self.force_non_negative_exponents_()
+        return # gets called after optimizer_step()
+ 
     def on_train_start(self):
         # Track total time
         self.st_total = time.time()
@@ -230,14 +239,14 @@ class PolyModel(pl.LightningModule):
                 ax[1].set_ylabel("Coefficient Value")
                 ax[1].legend()
 
-        if self.hparams.to_save_plots:
-            # save plot in current logging directory
-            path = os.path.join(self.logger.log_dir, "plots")
-            os.makedirs(path, exist_ok=True)
-            path = os.path.join(path, f"exponents_coefficients_{self.current_epoch}.png")
-            plt.savefig(path, facecolor="white")
+            if self.hparams.to_save_plots:
+                # save plot in current logging directory
+                path = os.path.join(self.logger.log_dir, "plots")
+                os.makedirs(path, exist_ok=True)
+                path = os.path.join(path, f"exponents_coefficients_{self.current_epoch}.png")
+                plt.savefig(path, facecolor="white")
 
-        plt.show() #to free memory
+            plt.show() #to free memory
                 
 
         return
