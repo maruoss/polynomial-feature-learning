@@ -35,7 +35,6 @@ class StandardModel(pl.LightningModule):
         self.l2 = nn.Linear(hidden_dim, 1, bias=True)
 
     def get_l1weights(self):
-        breakpoint()
         return self.l1.weight.detach().cpu().numpy()
     
     def get_l2weights(self):
