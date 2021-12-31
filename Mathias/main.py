@@ -210,7 +210,7 @@ model = PolyModel(
 
 logger = pl.loggers.TensorBoardLogger(
     'logs', 
-    name=f'{CUSTOMNOTE}.{TARGET_FN.__name__}.{SAMPLE_FN.__name__}.low-{LOW}.high-{HIGH}.'\
+    name=f'{CUSTOMNOTE}.{model.__class__.__name__}.{TARGET_FN.__name__}.{SAMPLE_FN.__name__}.low-{LOW}.high-{HIGH}.'\
     f'nobs-{NUM_OBS}.dim-{DIM}.#monomials-{HIDDEN_DIM}.lrate-{LEARNING_RATE}.batchsize-{BATCH_SIZE}.scale-{SCALE}',
     default_hp_metric=False,
 
@@ -275,8 +275,12 @@ plt.show()
 
 #%%%
 # Show plot LAYER 1 WEIGHT/ EXPONENTS and save
-exponent_path = np.stack(model.exponent_path).squeeze(-1) #shape(2, 3)
-coefficient_path = np.stack(model.coefficient_path).squeeze(-1) # shape (2, 3)
+if model.__class__.__name__ == "PolyModel":
+    exponent_path = np.stack(model.exponent_path).squeeze(-1) #shape(2, 3)
+    coefficient_path = np.stack(model.coefficient_path).squeeze(-1) # shape (2, 3)
+elif model.__class__.__name__ == "StandardModel":
+    exponent_path = np.stack(model.l1_weights).squeeze(-1) #shape(2, 3)
+    coefficient_path = np.stack(model.l2_weights).squeeze(-1) # shape (2, 3)
 bias_path = np.stack(model.bias_path).squeeze(-1) # shape (2, 1)
 
 # Sort from lowest to largest exponent

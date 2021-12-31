@@ -6,6 +6,7 @@ from torchmetrics.functional import r2_score
 from torch.nn import functional as F
 import pytorch_lightning as pl
 import matplotlib.pyplot as plt
+import os
 
 from plotter import predictions
 
@@ -22,8 +23,8 @@ class LinearModel(pl.LightningModule):
                 oos: bool,
                 target_fn,
                 show_orig_scale: bool,
-                to_plot: bool,
-                # plot_every: bool,
+                plot_every_n_epochs: int,
+                to_save_plots: bool,
                 ):
         super().__init__()
         self.save_hyperparameters()
@@ -80,12 +81,22 @@ class LinearModel(pl.LightningModule):
         return {"val_loss": loss,"y_hat": y_hat}
 
     def on_validation_epoch_end(self):
-        if self.hparams.to_plot:
-            # Plot predictions each epoch
+        # Plot predictions
+        if (self.current_epoch+1) % (self.hparams.plot_every_n_epochs) == 0: # +1 because 10th epoch is counted as 9 starting at 0
+            # Plot predictions
             plotter = predictions(datamodule=self.hparams.datamodule, model=self, low_oos=self.hparams.low_oos, 
                                         high_oos=self.hparams.high_oos, scale=self.hparams.scale, oos=self.hparams.oos, 
                                         target_fn=self.hparams.target_fn, show_orig_scale=self.hparams.show_orig_scale) 
             plotter.plot()
+            
+            if self.hparams.to_save_plots:
+                # save plot in current logging directory
+                path = os.path.join(self.logger.log_dir, "plots")
+                os.makedirs(path, exist_ok=True)
+                path = os.path.join(path, f"predictions_{self.current_epoch}.png")
+                plt.savefig(path, facecolor="white")
+
+            plt.show() #to free memory
         return
 
     # def validation_epoch_end(self, outputs):
