@@ -246,6 +246,7 @@ class PolyModel(pl.LightningModule):
                 os.makedirs(path, exist_ok=True)
                 path = os.path.join(path, f"exponents_coefficients_{self.current_epoch}.png")
                 plt.savefig(path, facecolor="white")
+                plt.close()
 
             plt.show() #to free memory
                 
