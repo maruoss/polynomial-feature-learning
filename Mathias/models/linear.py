@@ -95,6 +95,7 @@ class LinearModel(pl.LightningModule):
                 os.makedirs(path, exist_ok=True)
                 path = os.path.join(path, f"predictions_{self.current_epoch}.png")
                 plt.savefig(path, facecolor="white")
+                plt.close()
 
             plt.show() #to free memory
         return
