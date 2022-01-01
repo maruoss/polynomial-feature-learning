@@ -35,17 +35,17 @@ class predictions:
         else:
             self.X_test  = self.dm.X_test
             self.y_test = self.dm.y_test
-
-        with torch.no_grad():
-            self.y_pred_test = self.model(self.X_test.to(torch.device(self.device)))
-            self.y_pred_train = self.model(self.X_train.to(torch.device(self.device)))
-    
+            
     def plot(self):
         # clear all plots
         plt.close()
         plt.cla()
         plt.clf()
         # sns.set_style("darkgrid")
+
+        with torch.no_grad():
+            self.y_pred_test = self.model(self.X_test.to(torch.device(self.device)))
+            self.y_pred_train = self.model(self.X_train.to(torch.device(self.device)))
 
         if (self.show_orig_scale and self.scale):
             # transform back to original scale before plotting

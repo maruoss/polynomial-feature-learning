@@ -104,6 +104,10 @@ class PolyModel(pl.LightningModule):
         self.coefficient_path = [self.get_coefficients()]
         self.bias_path = [self.get_bias()]
 
+        self.plotter = predictions(datamodule=self.hparams.datamodule, model=self, low_oos=self.hparams.low_oos, 
+                    high_oos=self.hparams.high_oos, scale=self.hparams.scale, oos=self.hparams.oos, 
+                    target_fn=self.hparams.target_fn, show_orig_scale=self.hparams.show_orig_scale) 
+
     def on_train_epoch_start(self):
         self.st = time.time()
         self.steps = self.global_step
@@ -134,23 +138,20 @@ class PolyModel(pl.LightningModule):
 
     def on_validation_epoch_end(self):
         # Log exponents, coefficients and biases
-        exponents = self.get_exponents() #column vector [n, 1]
-        for i in range(len(exponents)):
-            self.log(f"exponent/#{i+1}", exponents[i, :].item(), prog_bar=True)
-        coefficients = self.get_coefficients() #column vector [n, 1]
-        for i in range(len(coefficients)):
-            self.log(f"coefficient/#{i+1}", coefficients[i, :].item(), prog_bar=True)
-        bias = self.get_bias() #column vector [n, 1]
-        for i in range(len(bias)):
-            self.log(f"bias/#{i+1}", bias[i, :].item(), prog_bar=True)
+        # exponents = self.get_exponents() #column vector [n, 1]
+        # for i in range(len(exponents)):
+        #     self.log(f"exponent/#{i+1}", exponents[i, :].item(), prog_bar=True)
+        # coefficients = self.get_coefficients() #column vector [n, 1]
+        # for i in range(len(coefficients)):
+        #     self.log(f"coefficient/#{i+1}", coefficients[i, :].item(), prog_bar=True)
+        # bias = self.get_bias() #column vector [n, 1]
+        # for i in range(len(bias)):
+        #     self.log(f"bias/#{i+1}", bias[i, :].item(), prog_bar=True)
         
         # Plot predictions, exponents and coefficients
         if (self.current_epoch+1) % (self.hparams.plot_every_n_epochs) == 0: # +1 because 10th epoch is counted as 9 starting at 0
             # Plot predictions
-            plotter = predictions(datamodule=self.hparams.datamodule, model=self, low_oos=self.hparams.low_oos, 
-                                        high_oos=self.hparams.high_oos, scale=self.hparams.scale, oos=self.hparams.oos, 
-                                        target_fn=self.hparams.target_fn, show_orig_scale=self.hparams.show_orig_scale) 
-            plotter.plot()
+            self.plotter.plot()
             
             if self.hparams.to_save_plots:
                 # save plot in current logging directory

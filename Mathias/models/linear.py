@@ -56,6 +56,9 @@ class LinearModel(pl.LightningModule):
     
     def on_train_start(self):
         self.st_total = time.time()
+        self.plotter = predictions(datamodule=self.hparams.datamodule, model=self, low_oos=self.hparams.low_oos, 
+                                    high_oos=self.hparams.high_oos, scale=self.hparams.scale, oos=self.hparams.oos, 
+                                    target_fn=self.hparams.target_fn, show_orig_scale=self.hparams.show_orig_scale)
 
     def on_train_epoch_start(self):
         self.st = time.time()
@@ -84,10 +87,8 @@ class LinearModel(pl.LightningModule):
         # Plot predictions
         if (self.current_epoch+1) % (self.hparams.plot_every_n_epochs) == 0: # +1 because 10th epoch is counted as 9 starting at 0
             # Plot predictions
-            plotter = predictions(datamodule=self.hparams.datamodule, model=self, low_oos=self.hparams.low_oos, 
-                                        high_oos=self.hparams.high_oos, scale=self.hparams.scale, oos=self.hparams.oos, 
-                                        target_fn=self.hparams.target_fn, show_orig_scale=self.hparams.show_orig_scale) 
-            plotter.plot()
+ 
+            self.plotter.plot()
             
             if self.hparams.to_save_plots:
                 # save plot in current logging directory
