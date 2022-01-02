@@ -187,7 +187,7 @@ class PolyModel(pl.LightningModule):
                 ax[0].set_title("Learned Exponent Paths")
                 ax[0].set_xlabel("Epoch")
                 ax[0].set_ylabel("Exponent Value")
-                ax[0].legend()
+
 
                 # Coefficients
                 for i in range(coefficient_path.shape[-1]):
@@ -196,8 +196,7 @@ class PolyModel(pl.LightningModule):
                 ax[1].set_title("Learned Coefficient Paths")
                 ax[1].set_xlabel("Epoch")
                 ax[1].set_ylabel("Coefficient Value")
-                ax[1].legend()
-            
+        
             else:
                 # Sort from lowest to largest exponent
                 ind = np.argsort(exponent_path[-1])
