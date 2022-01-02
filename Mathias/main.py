@@ -131,10 +131,10 @@ def truncated_normal(n, d, min_val=1., low=0., high=1.):
 # %%
 # Hyperparameters
 # Synthetic data X of shape [NUM_OBS, DIM]
-NUM_OBS = 1000 # not used for linspace args [multiply by 0.64 for training size, 1600 -> 1024 training size]
+NUM_OBS = 1000
 DIM = 1
 LOW = 1. #=MEAN for normal_args
-HIGH = 7. #=SD for normal_args
+HIGH = 5. #=SD for normal_args
 SAMPLE_FN = uniform_args
 
 # Function to learn ("constantf", "linearf")
@@ -155,7 +155,7 @@ LEARNING_RATE = 1e-5
 # Plotting options, oos = to plot testing out-of-sample points
 OOS = True
 LOW_OOS = 0.01 #only affects plots, needs oos=True
-HIGH_OOS = 8. #only affects plots, needs oos=True
+HIGH_OOS = 7. #only affects plots, needs oos=True
 
 # CHECKPOINTS + SAVING PLOTS
 PLOT_EVERY_N_EPOCHS = 10000 # has to be a multiple of "check_val_every_n_epoch"
@@ -226,7 +226,6 @@ trainer.fit(model, dm)
 # fig.show()
 
 
-
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PREDICTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 trainer.test(
     model, dm
@@ -247,47 +246,47 @@ plt.show()
 # print(f"y_pred_test: {plotter.y_pred_test}")
 
 #%%%
-# Show plot LAYER 1 WEIGHT/ EXPONENTS and save
-if model.__class__.__name__ == "PolyModel":
-    exponent_path = np.stack(model.exponent_path).squeeze(-1) #shape(2, 3)
-    coefficient_path = np.stack(model.coefficient_path).squeeze(-1) # shape (2, 3)
-elif model.__class__.__name__ == "StandardModel":
-    exponent_path = np.stack(model.l1_weights).squeeze(-1) #shape(2, 3)
-    coefficient_path = np.stack(model.l2_weights).squeeze(-1) # shape (2, 3)
-bias_path = np.stack(model.bias_path).squeeze(-1) # shape (2, 1)
+# # Show plot LAYER 1 WEIGHT/ EXPONENTS and save
+# if model.__class__.__name__ == "PolyModel":
+#     exponent_path = np.stack(model.exponent_path).squeeze(-1) #shape(2, 3)
+#     coefficient_path = np.stack(model.coefficient_path).squeeze(-1) # shape (2, 3)
+# elif model.__class__.__name__ == "StandardModel":
+#     exponent_path = np.stack(model.l1_weights).squeeze(-1) #shape(2, 3)
+#     coefficient_path = np.stack(model.l2_weights).squeeze(-1) # shape (2, 3)
+# bias_path = np.stack(model.bias_path).squeeze(-1) # shape (2, 1)
 
-fig, ax = plt.subplots(1, 2, figsize = (14, 5))
-# Exponents
-for i in range(exponent_path.shape[-1]):
-    ax[0].plot(exponent_path[:, i])
-if TARGET_FN.__name__ == "constantf":
-    ax[0].axhline(0, label='Target Rank', c="red", ls="--")
-if TARGET_FN.__name__ == "linearf":
-    ax[0].axhline(1, label='Target Rank', c="red", ls="--")
-if TARGET_FN.__name__  in ["polynomialf", "polynomialf_noise"]:
-    ax[0].axhline(3, label='Target Rank', c="red", ls="--") #rank 3 monomial
-    ax[0].axhline(2, label='Target Rank', c="red", ls="--") #rank 2 monomial
-    ax[0].axhline(1, label='Target Rank', c="red", ls="--")      
-    ax[0].axhline(0, label='Target Rank', c="red", ls="--")
+# fig, ax = plt.subplots(1, 2, figsize = (14, 5))
+# # Exponents
+# for i in range(exponent_path.shape[-1]):
+#     ax[0].plot(exponent_path[:, i])
+# if TARGET_FN.__name__ == "constantf":
+#     ax[0].axhline(0, label='Target Rank', c="red", ls="--")
+# if TARGET_FN.__name__ == "linearf":
+#     ax[0].axhline(1, label='Target Rank', c="red", ls="--")
+# if TARGET_FN.__name__  in ["polynomialf", "polynomialf_noise"]:
+#     ax[0].axhline(3, label='Target Rank', c="red", ls="--") #rank 3 monomial
+#     ax[0].axhline(2, label='Target Rank', c="red", ls="--") #rank 2 monomial
+#     ax[0].axhline(1, label='Target Rank', c="red", ls="--")      
+#     ax[0].axhline(0, label='Target Rank', c="red", ls="--")
 
-ax[0].set_title("Learned Exponent Paths")
-ax[0].set_xlabel("Epoch")
-ax[0].set_ylabel("Exponent Value")
+# ax[0].set_title("Learned Exponent Paths")
+# ax[0].set_xlabel("Epoch")
+# ax[0].set_ylabel("Exponent Value")
 
 
-# Coefficients
-for i in range(coefficient_path.shape[-1]):
-    ax[1].plot(coefficient_path[:, i])
+# # Coefficients
+# for i in range(coefficient_path.shape[-1]):
+#     ax[1].plot(coefficient_path[:, i])
                     
-ax[1].set_title("Learned Coefficient Paths")
-ax[1].set_xlabel("Epoch")
-ax[1].set_ylabel("Coefficient Value")
+# ax[1].set_title("Learned Coefficient Paths")
+# ax[1].set_xlabel("Epoch")
+# ax[1].set_ylabel("Coefficient Value")
 
 
-# Save figure
-path = os.path.join(logger.log_dir, f"final_exponents_coefficients_{NUM_EPOCHS}.png")
-plt.savefig(path, facecolor="white")
-plt.show()
+# # Save figure
+# path = os.path.join(logger.log_dir, f"final_exponents_coefficients_{NUM_EPOCHS}.png")
+# plt.savefig(path, facecolor="white")
+# plt.show()
 
 
 # %%

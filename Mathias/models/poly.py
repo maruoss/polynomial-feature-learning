@@ -73,10 +73,10 @@ class PolyModel(pl.LightningModule):
         # Track total time
         self.st_total = time.time()
 
-        # Initialize list with tracked layerweights
-        self.exponent_path = [self.get_exponents()]
-        self.coefficient_path = [self.get_coefficients()]
-        self.bias_path = [self.get_bias()]
+        # # Initialize list with tracked layerweights
+        # self.exponent_path = [self.get_exponents()]
+        # self.coefficient_path = [self.get_coefficients()]
+        # self.bias_path = [self.get_bias()]
         
         self.plotter = predictions(datamodule=self.hparams.datamodule, model=self, low_oos=self.hparams.low_oos, 
                     high_oos=self.hparams.high_oos, oos=self.hparams.oos, 
@@ -91,10 +91,10 @@ class PolyModel(pl.LightningModule):
         steps_done = self.global_step - self.steps
         self.log("time/step", elapsed / steps_done)
 
-        # Append exponents, coeffcients, bias to respective lists
-        self.exponent_path.append(self.get_exponents())
-        self.coefficient_path.append(self.get_coefficients())
-        self.bias_path.append(self.get_bias())
+        # # Append exponents, coeffcients, bias to respective lists
+        # self.exponent_path.append(self.get_exponents())
+        # self.coefficient_path.append(self.get_coefficients())
+        # self.bias_path.append(self.get_bias())
 
     def on_train_end(self):
         elapsed = time.time() - self.st_total
@@ -125,92 +125,92 @@ class PolyModel(pl.LightningModule):
 
             plt.show() #to free memory
 
-            # Condense paths into arrays
-            exponent_path = np.stack(self.exponent_path).squeeze(-1) #shape(2, 3)
-            coefficient_path = np.stack(self.coefficient_path).squeeze(-1) # shape (2, 3)
-            bias_path = np.stack(self.bias_path).squeeze(-1) # shape (2, 1)
+            # # Condense paths into arrays
+            # exponent_path = np.stack(self.exponent_path).squeeze(-1) #shape(2, 3)
+            # coefficient_path = np.stack(self.coefficient_path).squeeze(-1) # shape (2, 3)
+            # bias_path = np.stack(self.bias_path).squeeze(-1) # shape (2, 1)
 
-            # if more than 3 hidden neurons, cant show necessary rank of weights in layer1
-            if exponent_path.shape[-1] > 3:
-                fig, ax = plt.subplots(1, 2, figsize = (14, 5))
-                # Exponents
-                for i in range(exponent_path.shape[-1]):
-                    ax[0].plot(exponent_path[:, i])
-                if self.hparams.target_fn.__name__ == "constantf":
-                    ax[0].axhline(0, label='Target Rank', c="red", ls="--")
-                if self.hparams.target_fn.__name__ == "linearf":
-                    ax[0].axhline(1, label='Target Rank', c="red", ls="--")
-                if self.hparams.target_fn.__name__  in ["polynomialf", "polynomialf_noise"]:
-                    ax[0].axhline(3, label='Target Rank', c="red", ls="--") #rank 3 monomial
-                    ax[0].axhline(2, label='Target Rank', c="red", ls="--") #rank 2 monomial
-                    ax[0].axhline(1, label='Target Rank', c="red", ls="--")      
-                    ax[0].axhline(0, label='Target Rank', c="red", ls="--")
+            # # if more than 3 hidden neurons, cant show necessary rank of weights in layer1
+            # if exponent_path.shape[-1] > 3:
+            #     fig, ax = plt.subplots(1, 2, figsize = (14, 5))
+            #     # Exponents
+            #     for i in range(exponent_path.shape[-1]):
+            #         ax[0].plot(exponent_path[:, i])
+            #     if self.hparams.target_fn.__name__ == "constantf":
+            #         ax[0].axhline(0, label='Target Rank', c="red", ls="--")
+            #     if self.hparams.target_fn.__name__ == "linearf":
+            #         ax[0].axhline(1, label='Target Rank', c="red", ls="--")
+            #     if self.hparams.target_fn.__name__  in ["polynomialf", "polynomialf_noise"]:
+            #         ax[0].axhline(3, label='Target Rank', c="red", ls="--") #rank 3 monomial
+            #         ax[0].axhline(2, label='Target Rank', c="red", ls="--") #rank 2 monomial
+            #         ax[0].axhline(1, label='Target Rank', c="red", ls="--")      
+            #         ax[0].axhline(0, label='Target Rank', c="red", ls="--")
                 
-                ax[0].set_title("Learned Exponent Paths")
-                ax[0].set_xlabel("Epoch")
-                ax[0].set_ylabel("Exponent Value")
+            #     ax[0].set_title("Learned Exponent Paths")
+            #     ax[0].set_xlabel("Epoch")
+            #     ax[0].set_ylabel("Exponent Value")
 
 
-                # Coefficients
-                for i in range(coefficient_path.shape[-1]):
-                    ax[1].plot(coefficient_path[:, i])
+            #     # Coefficients
+            #     for i in range(coefficient_path.shape[-1]):
+            #         ax[1].plot(coefficient_path[:, i])
                                  
-                ax[1].set_title("Learned Coefficient Paths")
-                ax[1].set_xlabel("Epoch")
-                ax[1].set_ylabel("Coefficient Value")
+            #     ax[1].set_title("Learned Coefficient Paths")
+            #     ax[1].set_xlabel("Epoch")
+            #     ax[1].set_ylabel("Coefficient Value")
         
-            else:
-                # Sort from lowest to largest exponent
-                ind = np.argsort(exponent_path[-1])
-                exponent_path = exponent_path[:, ind]
-                coefficient_path = coefficient_path[:, ind]
-                coefficient_path = np.hstack([bias_path, coefficient_path])
+            # else:
+            #     # Sort from lowest to largest exponent
+            #     ind = np.argsort(exponent_path[-1])
+            #     exponent_path = exponent_path[:, ind]
+            #     coefficient_path = coefficient_path[:, ind]
+            #     coefficient_path = np.hstack([bias_path, coefficient_path])
 
-                # Prepare for plotting
-                fig, ax = plt.subplots(1, 2, figsize = (14, 5))
-                prop_cycle = plt.rcParams['axes.prop_cycle']
-                colors = prop_cycle.by_key()['color']
+            #     # Prepare for plotting
+            #     fig, ax = plt.subplots(1, 2, figsize = (14, 5))
+            #     prop_cycle = plt.rcParams['axes.prop_cycle']
+            #     colors = prop_cycle.by_key()['color']
 
-                # !!HARDCODED!! coefficients
-                coefficients = np.array([2, -15, 36, -25]) / 10
+            #     # !!HARDCODED!! coefficients
+            #     coefficients = np.array([2, -15, 36, -25]) / 10
 
-                # Plot the exponents path
-                for i, path in enumerate(exponent_path.T):
-                    label = "Target Exponents" if i == 0 else None
-                    ax[0].plot(np.full(self.current_epoch+1, i+1), label=label, c=colors[i], ls="--")
-                    label = "Learned exponents" if i == 0 else None
-                    ax[0].plot(path, label=label, c=colors[i])
+            #     # Plot the exponents path
+            #     for i, path in enumerate(exponent_path.T):
+            #         label = "Target Exponents" if i == 0 else None
+            #         ax[0].plot(np.full(self.current_epoch+1, i+1), label=label, c=colors[i], ls="--")
+            #         label = "Learned exponents" if i == 0 else None
+            #         ax[0].plot(path, label=label, c=colors[i])
 
-                plot_bottom = ax[0].get_ylim()[0]
-                if plot_bottom > 0:
-                    ax[0].set_ylim(0)
+            #     plot_bottom = ax[0].get_ylim()[0]
+            #     if plot_bottom > 0:
+            #         ax[0].set_ylim(0)
                         
-                ax[0].set_title("Learned Exponent Paths")
-                ax[0].set_xlabel("Epoch")
-                ax[0].set_ylabel("Exponent Value")
-                ax[0].legend()
+            #     ax[0].set_title("Learned Exponent Paths")
+            #     ax[0].set_xlabel("Epoch")
+            #     ax[0].set_ylabel("Exponent Value")
+            #     ax[0].legend()
 
-                # Plot the coefficient paths
-                for degree, (coefficient, path) in enumerate(zip(coefficients[::-1], coefficient_path.T)):
-                    label = "Target coefficient" if degree == 0 else None
-                    ax[1].plot(np.full(self.current_epoch+1, coefficient), label=label, c=colors[degree], ls="--")
-                    label = f"Learned {degree}-th degree coefficient"
-                    ax[1].plot(path, label=label, c=colors[degree])
+            #     # Plot the coefficient paths
+            #     for degree, (coefficient, path) in enumerate(zip(coefficients[::-1], coefficient_path.T)):
+            #         label = "Target coefficient" if degree == 0 else None
+            #         ax[1].plot(np.full(self.current_epoch+1, coefficient), label=label, c=colors[degree], ls="--")
+            #         label = f"Learned {degree}-th degree coefficient"
+            #         ax[1].plot(path, label=label, c=colors[degree])
                         
-                ax[1].set_title("Learned Coefficient Paths")
-                ax[1].set_xlabel("Epoch")
-                ax[1].set_ylabel("Coefficient Value")
-                ax[1].legend()
+            #     ax[1].set_title("Learned Coefficient Paths")
+            #     ax[1].set_xlabel("Epoch")
+            #     ax[1].set_ylabel("Coefficient Value")
+            #     ax[1].legend()
 
-            if self.hparams.to_save_plots:
-                # save plot in current logging directory
-                path = os.path.join(self.logger.log_dir, "plots")
-                os.makedirs(path, exist_ok=True)
-                path = os.path.join(path, f"exponents_coefficients_{self.current_epoch}.png")
-                plt.savefig(path, facecolor="white")
-                plt.close()
+            # if self.hparams.to_save_plots:
+            #     # save plot in current logging directory
+            #     path = os.path.join(self.logger.log_dir, "plots")
+            #     os.makedirs(path, exist_ok=True)
+            #     path = os.path.join(path, f"exponents_coefficients_{self.current_epoch}.png")
+            #     plt.savefig(path, facecolor="white")
+            #     plt.close()
 
-            plt.show() #to free memory
+            # plt.show() #to free memory
                 
 
         return
