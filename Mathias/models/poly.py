@@ -19,10 +19,10 @@ class PolyModel(pl.LightningModule):
                 datamodule,
                 low_oos: float,
                 high_oos: float,
-                scale: bool,
+                # scale: bool,
                 oos: bool,
                 target_fn,
-                show_orig_scale: bool,
+                # show_orig_scale: bool,
                 plot_every_n_epochs: int,
                 to_save_plots: bool,
                 ):
@@ -34,13 +34,8 @@ class PolyModel(pl.LightningModule):
         self.l2 = nn.Linear(hidden_dim, 1, bias=True)
 
         with torch.no_grad(): # should be preferred instead of weight.data.uniform
-            # Layer 0: dont initialize negative weights!
-            # self.l0.weight.uniform_(0., 1. / np.sqrt(input_dim))
-            # Layer1: Weights = Exponents (shouldnt be negative!)
             self.l1.weight.uniform_(0., 1.) # Dont initialize negative values. To mitigate nan problem.
-            # Layer2: Weigths = Coefficients (Linear comb. of monomials)
-            # self.l2.weight.uniform_(-1. / np.sqrt(input_dim), 1. / np.sqrt(input_dim)) # Dont initialize negative values -> can get l1 weight to negative weights!
-            self.l2.weight.uniform_(0., 1. / np.sqrt(input_dim)) # Dont initialize negative values -> can get l1 weight to negative weights!
+            # self.l2.weight.uniform_(0., 1. / np.sqrt(input_dim)) # Dont initialize negative values -> can get l1 weight to negative weights!
     
     def get_exponents(self):
         return self.l1.weight.detach().cpu().numpy()
@@ -55,7 +50,6 @@ class PolyModel(pl.LightningModule):
         with torch.no_grad():
             self.l1.weight.clamp_(0.)
 
-
     def forward(self, x):
         # return self.l2(torch.exp(self.l1(torch.log(self.l0(x.view(x.size(0), -1))))))
         return self.l2(torch.exp(self.l1(torch.log(x.view(x.size(0), -1)))))
@@ -63,24 +57,6 @@ class PolyModel(pl.LightningModule):
     def configure_optimizers(self):
         return torch.optim.SGD(self.parameters(), lr=self.hparams.learning_rate, momentum=0.9, nesterov=True)
 
-    def configure_gradient_clipping(self, optimizer, optimizer_idx, gradient_clip_val, gradient_clip_algorithm):
-        # # Clip gradients of exponents and coefficients together
-        # torch.nn.utils.clip_grad_norm_(self.parameters(), 1., norm_type=2.0, error_if_nonfinite=True)
-        # torch.nn.utils.clip_grad_value_(self.parameters(), 1)
-
-        # # Clip gradients separately
-        # for name, param in self.named_parameters():
-        #     if name in ['l1.weight']:
-        #         #1: Value Clipping
-        #         # nn.utils.clip_grad_value_(param, 1)
-        #         # #2:  Norm clipping
-        #         torch.nn.utils.clip_grad_norm_(param, 1., norm_type=2., error_if_nonfinite=True)
-        #         # # 3: Round gradients of exponents to be integers
-        #         # param.grad.data.round_() # round so that update to exponents are constrained to be integers
-        #     if name in ['l2.weight']:
-        #         torch.nn.utils.clip_grad_norm_(param, 1., norm_type=2.0, error_if_nonfinite=True)
-        #         pass
-        return
 
     def training_step(self, batch, batch_idx):
         x, y = batch
@@ -105,8 +81,8 @@ class PolyModel(pl.LightningModule):
         self.bias_path = [self.get_bias()]
 
         self.plotter = predictions(datamodule=self.hparams.datamodule, model=self, low_oos=self.hparams.low_oos, 
-                    high_oos=self.hparams.high_oos, scale=self.hparams.scale, oos=self.hparams.oos, 
-                    target_fn=self.hparams.target_fn, show_orig_scale=self.hparams.show_orig_scale) 
+                    high_oos=self.hparams.high_oos, oos=self.hparams.oos, 
+                    target_fn=self.hparams.target_fn) 
 
     def on_train_epoch_start(self):
         self.st = time.time()
@@ -132,22 +108,10 @@ class PolyModel(pl.LightningModule):
         loss = F.mse_loss(y_hat, y)
 
         self.log("loss/val_loss", loss, prog_bar=True)
-        # self.log("metrics/val_r2", r2_score(y_hat, y), prog_bar=True)
 
         return {"val_loss": loss,"y_hat": y_hat}
 
     def on_validation_epoch_end(self):
-        # Log exponents, coefficients and biases
-        # exponents = self.get_exponents() #column vector [n, 1]
-        # for i in range(len(exponents)):
-        #     self.log(f"exponent/#{i+1}", exponents[i, :].item(), prog_bar=True)
-        # coefficients = self.get_coefficients() #column vector [n, 1]
-        # for i in range(len(coefficients)):
-        #     self.log(f"coefficient/#{i+1}", coefficients[i, :].item(), prog_bar=True)
-        # bias = self.get_bias() #column vector [n, 1]
-        # for i in range(len(bias)):
-        #     self.log(f"bias/#{i+1}", bias[i, :].item(), prog_bar=True)
-        
         # Plot predictions, exponents and coefficients
         if (self.current_epoch+1) % (self.hparams.plot_every_n_epochs) == 0: # +1 because 10th epoch is counted as 9 starting at 0
             # Plot predictions
@@ -178,7 +142,7 @@ class PolyModel(pl.LightningModule):
                     ax[0].axhline(0, label='Target Rank', c="red", ls="--")
                 if self.hparams.target_fn.__name__ == "linearf":
                     ax[0].axhline(1, label='Target Rank', c="red", ls="--")
-                if self.hparams.target_fn.__name__ == "polynomialf":
+                if self.hparams.target_fn.__name__  in ["polynomialf", "polynomialf_noise"]:
                     ax[0].axhline(3, label='Target Rank', c="red", ls="--") #rank 3 monomial
                     ax[0].axhline(2, label='Target Rank', c="red", ls="--") #rank 2 monomial
                     ax[0].axhline(1, label='Target Rank', c="red", ls="--")      
@@ -209,7 +173,7 @@ class PolyModel(pl.LightningModule):
                 prop_cycle = plt.rcParams['axes.prop_cycle']
                 colors = prop_cycle.by_key()['color']
 
-                # coefficients
+                # !!HARDCODED!! coefficients
                 coefficients = np.array([2, -15, 36, -25]) / 10
 
                 # Plot the exponents path
@@ -263,5 +227,4 @@ class PolyModel(pl.LightningModule):
         loss = F.mse_loss(y_hat, y)
 
         self.log("loss/test_loss", loss, prog_bar=True)
-        # self.log("metrics/test_r2", r2_score(y_hat, y), prog_bar=True)
         return loss
