@@ -19,17 +19,15 @@ class StandardModel(pl.LightningModule):
                 datamodule,
                 low_oos: float,
                 high_oos: float,
-                scale: bool,
                 oos: bool,
                 target_fn,
-                show_orig_scale: bool,
                 plot_every_n_epochs: int,
                 to_save_plots: bool,
                 ):
         super().__init__()
         self.save_hyperparameters()
-        # Standard NN regression layers
 
+        # Standard NN regression layers
         # self.l0 = nn.Linear(input_dim, input_dim, bias=False) # even when not used influences random initialization of l1 and l2 layers (random process)
         self.l1 = nn.Linear(input_dim, hidden_dim, bias=False)
         self.l2 = nn.Linear(hidden_dim, 1, bias=True)
@@ -44,16 +42,11 @@ class StandardModel(pl.LightningModule):
         return self.l2.bias.detach().cpu().numpy().reshape(-1, 1)
 
     def forward(self, x):
-        return self.l2(torch.sigmoid(self.l1(x.view(x.size(0), -1))))
+        return self.l2(torch.relu(self.l1(x.view(x.size(0), -1))))
 
     
     def configure_optimizers(self):
-        return torch.optim.SGD(self.parameters(), lr=self.hparams.learning_rate, momentum=0.8, nesterov=True)
-
-    def configure_gradient_clipping(self, optimizer, optimizer_idx, gradient_clip_val, gradient_clip_algorithm):
-        # torch.nn.utils.clip_grad_norm_(self.parameters(), 1., norm_type=2.0, error_if_nonfinite=True)
-        # torch.nn.utils.clip_grad_value_(self.parameters(), 1)
-        return
+        return torch.optim.SGD(self.parameters(), lr=self.hparams.learning_rate, momentum=0.9, nesterov=True)
 
     def training_step(self, batch, batch_idx):
         x, y = batch
@@ -73,8 +66,8 @@ class StandardModel(pl.LightningModule):
         self.bias_path = [self.get_bias()]
 
         self.plotter = predictions(datamodule=self.hparams.datamodule, model=self, low_oos=self.hparams.low_oos, 
-                                    high_oos=self.hparams.high_oos, scale=self.hparams.scale, oos=self.hparams.oos, 
-                                    target_fn=self.hparams.target_fn, show_orig_scale=self.hparams.show_orig_scale) 
+                                    high_oos=self.hparams.high_oos, oos=self.hparams.oos, 
+                                    target_fn=self.hparams.target_fn) 
 
     def on_train_epoch_start(self):
         self.st = time.time()

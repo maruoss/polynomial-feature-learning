@@ -19,10 +19,8 @@ class LinearModel(pl.LightningModule):
                 datamodule,
                 low_oos: float,
                 high_oos: float,
-                scale: bool,
                 oos: bool,
                 target_fn,
-                show_orig_scale: bool,
                 plot_every_n_epochs: int,
                 to_save_plots: bool,
                 ):
@@ -38,7 +36,7 @@ class LinearModel(pl.LightningModule):
 
     
     def configure_optimizers(self):
-        return torch.optim.SGD(self.parameters(), lr=self.hparams.learning_rate, momentum=0.8, nesterov=True)
+        return torch.optim.SGD(self.parameters(), lr=self.hparams.learning_rate, momentum=0.9, nesterov=True)
 
     def configure_gradient_clipping(self, optimizer, optimizer_idx, gradient_clip_val, gradient_clip_algorithm):
         # torch.nn.utils.clip_grad_norm_(self.parameters(), 1., norm_type=2.0, error_if_nonfinite=True)
@@ -57,8 +55,8 @@ class LinearModel(pl.LightningModule):
     def on_train_start(self):
         self.st_total = time.time()
         self.plotter = predictions(datamodule=self.hparams.datamodule, model=self, low_oos=self.hparams.low_oos, 
-                                    high_oos=self.hparams.high_oos, scale=self.hparams.scale, oos=self.hparams.oos, 
-                                    target_fn=self.hparams.target_fn, show_orig_scale=self.hparams.show_orig_scale)
+                                    high_oos=self.hparams.high_oos, oos=self.hparams.oos, 
+                                    target_fn=self.hparams.target_fn)
 
     def on_train_epoch_start(self):
         self.st = time.time()
