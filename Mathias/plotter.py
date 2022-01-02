@@ -10,7 +10,6 @@ class predictions:
                 model,
                 low_oos: float,
                 high_oos: float, 
-                oos: bool,
                 target_fn,
                 ):
 
@@ -20,14 +19,10 @@ class predictions:
         self.target_fn = target_fn
         self.device = model.device # in trainer will be cuda, outside will be cpu
 
-        if oos:
-            self.x = torch.linspace(low_oos, high_oos, 200).view(-1, 1)
-            self.y = target_fn(self.x)
-        else:
-            self.x  = torch.from_numpy(np.linspace(self.X_train.min(), self.X_train.max(), 200)).view(-1, 1)
-            self.y = target_fn(self.x)
-        
-            
+        # out of sample
+        self.x = torch.linspace(low_oos, high_oos, 200).view(-1, 1)
+        self.y = target_fn(self.x)
+
     def plot(self):
         # clear all plots
         plt.close()
@@ -37,47 +32,72 @@ class predictions:
 
         with torch.no_grad():
             y_pred = self.model(self.x.to(torch.device(self.device)))
-            y_pred_train = self.model(self.X_train.to(torch.device(self.device)))
-
         # Unnormalize predictions
         y_pred = y_pred * self.dm.target_std + self.dm.target_mean
-        y_pred_train = y_pred_train * self.dm.target_std + self.dm.target_mean
-        
-        
-        # Create groundtruth over possibly larger domain
+
+        # Create groundtruth
         y = self.target_fn(self.x)
         
         fig, ax = plt.subplots(1, 2, figsize = (14, 5))
+
+        if self.target_fn.__name__ == "polynomialf":
+            function_name = "Polynomial Function"
+        elif self.target_fn.__name__ == "sinf":
+            function_name = "sin(x)"
+        elif self.target_fn.__name__ == "cosinef":
+            function_name = "cos(x)"
+        elif self.target_fn.__name__ == "expf":
+            function_name = "exp(x)"
+        elif self.target_fn.__name__ == "logf":
+            function_name = "log(x)"
+        
         if self.model.__class__.__name__ == "PolyModel":
-            ax[0].set_title(f"{self.target_fn.__name__[:-1].title()} Function learned with {len(self.model.l1.weight)} Monomials")
+            ax[0].set_title(f"{function_name} learned with {len(self.model.l1.weight)} Monomials")
         elif self.model.__class__.__name__ == "StandardModel":
-            ax[0].set_title(f"{self.target_fn.__name__[:-1].title()} Function learned with {len(self.model.l1.weight)} Neurons")
+            ax[0].set_title(f"{function_name} learned with {len(self.model.l1.weight)} Neurons")
+        
         ax[0].plot(self.x, y, label="groundtruth", color="red")
         ax[0].plot(self.x, y_pred.cpu(), label="learned function", color="orange")
         ax[0].scatter(self.X_train, self.dm.y_train_noisy, alpha=0.2, label="training set")
 
-        ax[0].set_ylim(-5, 15)
+        # ax[0].set_ylim([2*y.min().item(), 2*y.max().item()])
+        if  self.target_fn.__name__ in ["sinf", "cosinef", "logf"]:
+            ax[0].set_ylim(-4, 4) #fixed scale of plot
+        else:
+            ax[0].set_ylim(-5, 15)
         ax[0].set_xlabel("x")
         ax[0].set_ylabel("y")
         ax[0].legend()
 
         
-        # Create groundtruth over possibly larger domain
+        # Create groundtruth over training domain
         self.x = torch.linspace(self.X_train.min(), self.X_train.max(), 200).view(-1, 1)
+        # Predict on new out of sample set
+        with torch.no_grad():
+            y_pred = self.model(self.x.to(torch.device(self.device)))
+        # Unnormalize predictions
+        y_pred = y_pred * self.dm.target_std + self.dm.target_mean
+
+        # Groundtruth
         y = self.target_fn(self.x)
 
         if self.model.__class__.__name__ == "PolyModel":
-            ax[1].set_title(f"{self.target_fn.__name__[:-1].title()} Function learned with {len(self.model.l1.weight)} Monomials")
+            ax[1].set_title(f"{function_name} learned with {len(self.model.l1.weight)} Monomials")
         elif self.model.__class__.__name__ == "StandardModel":
-            ax[1].set_title(f"{self.target_fn.__name__[:-1].title()} Function learned with {len(self.model.l1.weight)} Neurons")
+            ax[1].set_title(f"{function_name} learned with {len(self.model.l1.weight)} Neurons")
 
         ax[1].plot(self.x, y, label="groundtruth", color="red")
         ax[1].plot(self.x, y_pred.cpu(), label="learned function", color="orange")
         ax[1].scatter(self.X_train, self.dm.y_train_noisy, alpha=0.2, label="training set")
 
-        # ax[1].ylim(-5, 15)
+        # ax[1].set_ylim([y.min().item(), y.max().item()])
+        if  self.target_fn.__name__ in ["sinf", "cosinef", "logf"]:
+            ax[1].set_ylim(-1.5, 1.5) #fixed scale of plot
+        else:
+            ax[1].set_ylim([y.min().item(), y.max().item()])
+
         ax[1].set_xlabel("x")
         ax[1].set_ylabel("y")
         ax[1].legend()
-        # plt.autoscale(enable=False) # to autoscale axes if difference gets small
+        plt.autoscale(enable=False) # to autoscale axes if difference gets small
         # plt.show() # plt.show() before plt.savefig saves empty figure

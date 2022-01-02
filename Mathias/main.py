@@ -179,7 +179,6 @@ model = PolyModel(
     datamodule=dm,
     low_oos=LOW_OOS, 
     high_oos=HIGH_OOS, 
-    oos=OOS, 
     target_fn=TARGET_FN,
     plot_every_n_epochs=PLOT_EVERY_N_EPOCHS,
     to_save_plots=TO_SAVE_PLOTS,
@@ -233,8 +232,7 @@ trainer.test(
 
 # %%
 # Show predictions and save plot
-from plotter import predictions
-plotter = predictions(dm, model, low_oos=LOW_OOS, high_oos=HIGH_OOS, oos=True, target_fn=TARGET_FN)
+plotter = predictions(dm, model, low_oos=LOW_OOS, high_oos=HIGH_OOS, target_fn=TARGET_FN)
 fig = plt.figure(figsize=(7, 5))
 plotter.plot()
 plt.tight_layout()

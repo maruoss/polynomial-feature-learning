@@ -19,7 +19,6 @@ class StandardModel(pl.LightningModule):
                 datamodule,
                 low_oos: float,
                 high_oos: float,
-                oos: bool,
                 target_fn,
                 plot_every_n_epochs: int,
                 to_save_plots: bool,
@@ -65,10 +64,6 @@ class StandardModel(pl.LightningModule):
         self.l2_weights = [self.get_l2weights()]
         self.bias_path = [self.get_bias()]
 
-        self.plotter = predictions(datamodule=self.hparams.datamodule, model=self, low_oos=self.hparams.low_oos, 
-                                    high_oos=self.hparams.high_oos, oos=self.hparams.oos, 
-                                    target_fn=self.hparams.target_fn) 
-
     def on_train_epoch_start(self):
         self.st = time.time()
         self.steps = self.global_step
@@ -98,20 +93,12 @@ class StandardModel(pl.LightningModule):
         return {"val_loss": loss,"y_hat": y_hat}
 
     def on_validation_epoch_end(self):
-        # Log layer1, layer2 and biases
-        # l1weights = self.get_l1weights() #column vector [n, 1]
-        # for i in range(len(l1weights)):
-        #     self.log(f"layer1/#{i+1}", l1weights[i, :].item(), prog_bar=True)
-        # l2_weights = self.get_l2weights() #column vector [n, 1]
-        # for i in range(len(l2_weights)):
-        #     self.log(f"layer2/#{i+1}", l2_weights[i, :].item(), prog_bar=True)
-        # bias = self.get_bias() #column vector [n, 1]
-        # for i in range(len(bias)):
-        #     self.log(f"bias/#{i+1}", bias[i, :].item(), prog_bar=True)
-        
         # Plot predictions
         if (self.current_epoch+1) % (self.hparams.plot_every_n_epochs) == 0: # +1 because 10th epoch is counted as 9 starting at 0
             # Plot predictions
+            # Initialize plotter
+            self.plotter = predictions(datamodule=self.hparams.datamodule, model=self, low_oos=self.hparams.low_oos, 
+                            high_oos=self.hparams.high_oos, target_fn=self.hparams.target_fn) 
 
             self.plotter.plot()
             

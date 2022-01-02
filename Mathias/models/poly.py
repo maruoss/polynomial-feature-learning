@@ -19,7 +19,6 @@ class PolyModel(pl.LightningModule):
                 datamodule,
                 low_oos: float,
                 high_oos: float,
-                oos: bool,
                 target_fn,
                 plot_every_n_epochs: int,
                 to_save_plots: bool,
@@ -77,10 +76,6 @@ class PolyModel(pl.LightningModule):
         # self.exponent_path = [self.get_exponents()]
         # self.coefficient_path = [self.get_coefficients()]
         # self.bias_path = [self.get_bias()]
-        
-        self.plotter = predictions(datamodule=self.hparams.datamodule, model=self, low_oos=self.hparams.low_oos, 
-                    high_oos=self.hparams.high_oos, oos=self.hparams.oos, 
-                    target_fn=self.hparams.target_fn) 
 
     def on_train_epoch_start(self):
         self.st = time.time()
@@ -113,6 +108,9 @@ class PolyModel(pl.LightningModule):
         # Plot predictions, exponents and coefficients
         if (self.current_epoch+1) % (self.hparams.plot_every_n_epochs) == 0: # +1 because 10th epoch is counted as 9 starting at 0
             # Plot predictions
+            self.plotter = predictions(datamodule=self.hparams.datamodule, model=self, low_oos=self.hparams.low_oos, 
+            high_oos=self.hparams.high_oos, target_fn=self.hparams.target_fn) 
+            
             self.plotter.plot()
             
             if self.hparams.to_save_plots:
