@@ -1,47 +1,66 @@
 import torch
+from torch import nn
+from torch.utils.data import DataLoader, Dataset
+import matplotlib.pyplot as plt
+import matplotlib.colors as mcolors
+import numpy as np
+from tqdm import tqdm
+from scipy.ndimage import gaussian_filter1d
+
+def tensor_to_numpy(tensor):
+    return tensor.detach().cpu().numpy().copy()
 
 
-class exp_act(torch.nn.Module):
-    def __init__(self):
-        super(exp_act, self).__init__()
-        self.relu = torch.nn.ReLU()
-
+class LogActivation(nn.Module):
     def forward(self, x):
-        x = self.relu(x)
-        x = torch.exp(x)
-        return x
+        return torch.log(x)
+        return torch.log(torch.maximum(x, torch.tensor(1e-10)))
 
 
-class log_act(torch.nn.Module):
-    def __init__(self):
-        super(log_act, self).__init__()
-        self.relu = torch.nn.ReLU()
-
+class ExpActivation(nn.Module):
     def forward(self, x):
-        x = self.relu(x)
-        x = torch.add(x, 1)
-        x = torch.log(x)
-        return x
+        return torch.exp(x)
 
 
-class MyModel(torch.nn.Module):
-    def __init__(self, nrmonomials, nrvariables):
-        super(MyModel, self).__init__()
-        self.lin1 = torch.nn.Linear(1, nrvariables, bias=False)
-        torch.nn.init.constant_(self.lin1.weight, 1)
-        self.lin2 = torch.nn.Linear(nrvariables, nrmonomials, bias=False)
-        torch.nn.init.normal_(self.lin2.weight, 0.1, 0.1)
-        self.lin3 = torch.nn.Linear(nrmonomials, 1, bias=True)
-        torch.nn.init.normal_(self.lin2.weight, 0.5, 0.1)
-        self.layers = torch.nn.Sequential(
-            # self.lin1,
-            log_act(),
-            # torch.nn.ReLU(),
-            self.lin2,
-            exp_act(),
-            self.lin3
+# Define model
+class PolynomialNN(nn.Module):
+    def __init__(self, nrvariables, n_monomials=1, exponent_bias=True):
+        super(PolynomialNN, self).__init__()
+        self.stack = nn.Sequential(
+            LogActivation(),
+            nn.Linear(nrvariables, n_monomials, bias=exponent_bias),
+            ExpActivation(),
+            nn.Linear(n_monomials, 1)
         )
+        self.exponent_bias = exponent_bias
 
     def forward(self, x):
-        x = self.layers(x)
+        x = self.stack(x)
         return x
+
+    @property
+    def exponent_layer(self):
+        return self.stack[1]
+
+    @property
+    def coefficient_layer(self):
+        return self.stack[3]
+
+    def get_exponents(self):
+        return tensor_to_numpy(self.stack[1].weight)
+
+    def get_coefficients(self):
+        coefficients = tensor_to_numpy(self.coefficient_layer.weight)
+        if self.exponent_bias:
+            coefficients *= np.exp(tensor_to_numpy(self.exponent_layer.bias))
+        return coefficients
+
+    def get_bias(self):
+        return tensor_to_numpy(self.coefficient_layer.bias)
+
+    def exponents_abs_(self):
+        self.exponent_layer.weight.abs_()
+
+    def force_non_negative_exponents_(self):
+        with torch.no_grad():
+            self.exponent_layer.weight.clamp_(0.)
