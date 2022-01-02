@@ -19,10 +19,8 @@ class StandardModel(pl.LightningModule):
                 datamodule,
                 low_oos: float,
                 high_oos: float,
-                scale: bool,
                 oos: bool,
                 target_fn,
-                show_orig_scale: bool,
                 plot_every_n_epochs: int,
                 to_save_plots: bool,
                 ):
@@ -73,8 +71,8 @@ class StandardModel(pl.LightningModule):
         self.bias_path = [self.get_bias()]
 
         self.plotter = predictions(datamodule=self.hparams.datamodule, model=self, low_oos=self.hparams.low_oos, 
-                                    high_oos=self.hparams.high_oos, scale=self.hparams.scale, oos=self.hparams.oos, 
-                                    target_fn=self.hparams.target_fn, show_orig_scale=self.hparams.show_orig_scale) 
+                                    high_oos=self.hparams.high_oos, oos=self.hparams.oos, 
+                                    target_fn=self.hparams.target_fn) 
 
     def on_train_epoch_start(self):
         self.st = time.time()

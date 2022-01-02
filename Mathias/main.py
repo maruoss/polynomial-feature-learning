@@ -31,21 +31,7 @@ import warnings
 warnings.filterwarnings("ignore", ".*Consider increasing the value of the `num_workers` argument*")
 warnings.filterwarnings("ignore", category=DeprecationWarning) 
 
-# %%
 
-# y = y.sum(dim=1, keepdim=True) + 1.
-# train_test_split(X, y, random_state=42,
-#                 train_size=0.7, shuffle=True)
-
-# %%
-# Unit test randomness in splits
-# a = MyDataModule(batch_size=8, n=100, d=1, low=0., high=10., funct="constantf", scale=True)
-# a.setup(stage=None)
-# a.example()
-
-
-# %%
-# Model
 # %%
 # constant function for y values
 def constantf(x: torch.Tensor, y: torch.FloatTensor=3.) -> torch.Tensor:
@@ -93,21 +79,6 @@ def sinf(x: torch.Tensor) -> torch.Tensor:
         if len(y.shape) == 1:
             y = y.view(-1, 1)
         y = y.sum(axis=1, keepdim=True) # sum across dimension
-    return y
-
-def polynomialf_noise(x: torch.Tensor) -> torch.Tensor:
-    """
-    Takes array x of shape [obs, dim] as input and outputs y
-    in shape [obs, 1].
-    """
-    y = 0.2*x**3 - 1.5*x**2 + 3.6*x - 2.5
-    if hasattr(y, "shape"):
-        if len(y.shape) == 1:
-            y = y.view(-1, 1)
-        y = y.sum(axis=1, keepdim=True) # sum across dimension
-    # noise proportional to std of targets
-    sd = 0.1 * torch.std(y)
-    y += torch.normal(0, sd, (len(y), 1))
     return y
 
 # %%
@@ -163,12 +134,11 @@ def truncated_normal(n, d, min_val=1., low=0., high=1.):
 NUM_OBS = 1000 # not used for linspace args [multiply by 0.64 for training size, 1600 -> 1024 training size]
 DIM = 1
 LOW = 1. #=MEAN for normal_args
-HIGH = 8. #=SD for normal_args
+HIGH = 7. #=SD for normal_args
 SAMPLE_FN = uniform_args
 
 # Function to learn ("constantf", "linearf")
-TARGET_FN = polynomialf_noise
-# SCALE = False
+TARGET_FN = polynomialf
 
 # Layer architecture
 HIDDEN_DIM = 10      # equal to number of monomials if log/exp are used as activ. f.
@@ -179,17 +149,16 @@ CUSTOMNOTE = "DEBUGGING"
 
 # Learning algo
 BATCH_SIZE = 128
-NUM_EPOCHS = 2000000
-LEARNING_RATE = 1e-4
+NUM_EPOCHS = 250000
+LEARNING_RATE = 1e-5
 
 # Plotting options, oos = to plot testing out-of-sample points
 OOS = True
-LOW_OOS = 1. #only affects plots, needs oos=True
+LOW_OOS = 0.01 #only affects plots, needs oos=True
 HIGH_OOS = 8. #only affects plots, needs oos=True
-# SHOW_ORIG_SCALE = False # #only affects plots, SCALE has to be True to have an effect
 
 # CHECKPOINTS + SAVING PLOTS
-PLOT_EVERY_N_EPOCHS = 200000 # has to be a multiple of "check_val_every_n_epoch"
+PLOT_EVERY_N_EPOCHS = 10000 # has to be a multiple of "check_val_every_n_epoch"
 TO_SAVE_PLOTS = True # whether to save plots to disk
 
 # *********************
@@ -201,7 +170,6 @@ dm = MyDataModule(
     low=LOW,    #keyword for sample_fn
     high=HIGH,  #keyword for sample_fn
     target_fn=TARGET_FN,
-    # scale=SCALE,
 )
 # Choose: PolyModel, StandardModel or LinearModel
 model = PolyModel(
@@ -211,10 +179,8 @@ model = PolyModel(
     datamodule=dm,
     low_oos=LOW_OOS, 
     high_oos=HIGH_OOS, 
-    # scale=SCALE,
     oos=OOS, 
     target_fn=TARGET_FN,
-    # show_orig_scale=SHOW_ORIG_SCALE, 
     plot_every_n_epochs=PLOT_EVERY_N_EPOCHS,
     to_save_plots=TO_SAVE_PLOTS,
 )
@@ -230,7 +196,7 @@ logger = pl.loggers.TensorBoardLogger(
 checkpoint_callback = ModelCheckpoint(
     # monitor="loss/val_loss",
     # filename="epoch={epoch:02d}-val_loss={loss/val_loss:.6f}",
-    every_n_epochs=1000,
+    every_n_epochs=PLOT_EVERY_N_EPOCHS,
     save_last=True,
     # auto_insert_metric_name=False #to prevent {loss/val_loss} from creating subfolders because of /
     )
@@ -240,14 +206,10 @@ trainer = pl.Trainer(
     # default_root_dir='ckpts',
     gpus=1,
     logger=logger, #=logger or False
-    # log_every_n_steps=1,
-    # flush_logs_every_n_steps=50000,
-    check_val_every_n_epoch=10,
-    # track_grad_norm=2,
+    check_val_every_n_epoch=PLOT_EVERY_N_EPOCHS,
     callbacks=checkpoint_callback, #default is after each training epoch
     # enable_checkpointing = False,
     num_sanity_val_steps=0,
-    # profiler="simple",
 )
 # 
 trainer.fit(model, dm)
