@@ -17,7 +17,7 @@ import pandas as pd
 import scipy
 from model import Poly_Net, Relu_Net
 
-print('cusa available: ', torch.cuda.is_available())
+print('cuda available: ', torch.cuda.is_available())
 
 # use either cpu or gpu
 # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -70,10 +70,11 @@ def train_and_test(X, y, nnet, mon_dim, b1, b2, bs, lr, max_epochs=1000, nsplits
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
         # prev_loss = inf
+        out_dim = y.shape[1]
         if nnet == 'poly':
-            net = Poly_Net(input_dim, mon_dim, 2, b1, b2)
+            net = Poly_Net(input_dim, mon_dim, out_dim, b1, b2)
         else:
-            net = Relu_Net(input_dim, mon_dim, 2, b1, b2)
+            net = Relu_Net(input_dim, mon_dim, out_dim, b1, b2)
         net.to(device)
         criterion = nn.MSELoss()
         # optimizer = optim.SGD(net.parameters(), lr=lr, momentum=momentum)
