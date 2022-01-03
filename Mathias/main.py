@@ -174,7 +174,7 @@ HIGH = 5. #=SD for normal_args
 SAMPLE_FN = uniform_args
 
 # Function to learn ("constantf", "linearf")
-TARGET_FN = cosinef
+TARGET_FN = polynomialf
 
 
 # Layer architecture
@@ -186,7 +186,7 @@ CUSTOMNOTE = "DEBUGGING"
 
 # Learning algo
 BATCH_SIZE = 128
-NUM_EPOCHS = 10
+NUM_EPOCHS = 300000
 LEARNING_RATE = 1e-5
 
 # Plotting options, oos = to plot testing out-of-sample points
@@ -194,7 +194,7 @@ LOW_OOS = 0.01 #only affects plots, needs oos=True
 HIGH_OOS = 9. #only affects plots, needs oos=True
 
 # CHECKPOINTS + SAVING PLOTS
-PLOT_EVERY_N_EPOCHS = 10 # has to be a multiple of "check_val_every_n_epoch"
+PLOT_EVERY_N_EPOCHS = 10000 # has to be a multiple of "check_val_every_n_epoch"
 TO_SAVE_PLOTS = True # whether to save plots to disk
 
 # *********************
