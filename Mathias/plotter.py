@@ -123,8 +123,12 @@ class predictions:
         ax[2].scatter(self.X_train, self.dm.y_train_noisy, alpha=0.2, label="training set")
 
         # ax[1].set_ylim([y.min().item(), y.max().item()])
-        if  self.target_fn.__name__ in ["sinf", "cosinef", "logf"]:
+        if  self.target_fn.__name__ in ["sinf", "cosinef"]:
             ax[2].set_ylim(-1.5, 1.5) #fixed scale of plot
+        elif self.target_fn.__name__ in ["expf"]:
+            ax[2].set_ylim([y.min().item() - 0.2, y.max().item()])
+        elif self.target_fn.__name__ in ["logf"]:
+            ax[2].set_ylim([y.min().item(), y.max().item() + 0.1])
         else:
             ax[2].set_ylim([y.min().item(), y.max().item()])
 

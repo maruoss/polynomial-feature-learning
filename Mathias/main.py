@@ -185,7 +185,7 @@ CUSTOMNOTE = "DEBUGGING"
 
 # Learning algo
 BATCH_SIZE = 128
-NUM_EPOCHS = 250000
+NUM_EPOCHS = 300000
 LEARNING_RATE = 1e-5
 
 # Plotting options, oos = to plot testing out-of-sample points
