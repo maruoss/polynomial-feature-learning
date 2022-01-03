@@ -81,6 +81,42 @@ def sinf(x: torch.Tensor) -> torch.Tensor:
         y = y.sum(axis=1, keepdim=True) # sum across dimension
     return y
 
+def cosinef(x: torch.Tensor) -> torch.Tensor:
+    """
+    Takes array x of shape [obs, dim] as input and outputs y
+    in shape [obs, 1].
+    """
+    y = torch.cos(x)
+    if hasattr(y, "shape"):
+        if len(y.shape) == 1:
+            y = y.view(-1, 1)
+        y = y.sum(axis=1, keepdim=True) # sum across dimension
+    return y
+
+def expf(x: torch.Tensor) -> torch.Tensor:
+    """
+    Takes array x of shape [obs, dim] as input and outputs y
+    in shape [obs, 1].
+    """
+    y = torch.exp(x - 4) #shift exponent function to the right
+    if hasattr(y, "shape"):
+        if len(y.shape) == 1:
+            y = y.view(-1, 1)
+        y = y.sum(axis=1, keepdim=True) # sum across dimension
+    return y
+
+def logf(x: torch.Tensor) -> torch.Tensor:
+    """
+    Takes array x of shape [obs, dim] as input and outputs y
+    in shape [obs, 1].
+    """
+    y = torch.log(x)
+    if hasattr(y, "shape"):
+        if len(y.shape) == 1:
+            y = y.view(-1, 1)
+        y = y.sum(axis=1, keepdim=True) # sum across dimension
+    return y
+
 # %%
 # create x values
 def uniform_args(n, d, low, high) -> torch.Tensor():
@@ -185,8 +221,8 @@ model = PolyModel(
 
 logger = pl.loggers.TensorBoardLogger(
     'logs', 
-    name=f'{CUSTOMNOTE}.{model.__class__.__name__}.{TARGET_FN.__name__}.{SAMPLE_FN.__name__}.low-{LOW}.high-{HIGH}.'\
-    f'nobs-{NUM_OBS}.dim-{DIM}.#monomials-{HIDDEN_DIM}.lrate-{LEARNING_RATE}.batchsize-{BATCH_SIZE}',
+    name=f'{CUSTOMNOTE}.{model.__class__.__name__}.{TARGET_FN.__name__}.{SAMPLE_FN.__name__}.lrate-{LEARNING_RATE}.low-{LOW}.high-{HIGH}.'\
+    f'nobs-{NUM_OBS}.dim-{DIM}.#monomials-{HIDDEN_DIM}.batchsize-{BATCH_SIZE}',
     default_hp_metric=False,
 
 )
