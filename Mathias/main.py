@@ -14,6 +14,7 @@ import seaborn as sns
 from numpy.random import default_rng
 import pdb
 import os
+from numpy.polynomial import Polynomial as T
 
 # files
 from plotter import predictions
@@ -285,7 +286,6 @@ plt.show()
 
 #
 # Plot 3 Power Series plots each zoomed differently ***************************************************
-from numpy.polynomial import Polynomial as T
 
 # get X_train domain
 X_train = dm.X_train
