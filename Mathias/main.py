@@ -231,7 +231,7 @@ logger = pl.loggers.TensorBoardLogger(
 checkpoint_callback = ModelCheckpoint(
     # monitor="loss/val_loss",
     # filename="epoch={epoch:02d}-val_loss={loss/val_loss:.6f}",
-    every_n_epochs=PLOT_EVERY_N_EPOCHS,
+    every_n_epochs=1000000,
     save_last=True,
     # auto_insert_metric_name=False #to prevent {loss/val_loss} from creating subfolders because of /
     )
@@ -259,6 +259,11 @@ trainer.fit(model, dm)
 # # Plot with
 # fig = lr_finder.plot(suggest=True)
 # fig.show()
+# %%
+# Load Model
+# model = PolyModel.load_from_checkpoint(r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-1e-05.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_3\checkpoints\last.ckpt")
+# # model.load_state_dict(torch.load(r"C:\Users\Mathiass\Desktop\Experiments\polynomial-feature-learning\EXP1.POLYNOMIAL.10MONOMIALS.PolyModel.polynomialf.uniform_args.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.lrate-1e-05.batchsize-128\version_0\checkpoints\epoch=249999-step=1999999.ckpt"))
+# print(model.hparams.learning_rate)
 
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PREDICTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
