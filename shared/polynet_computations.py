@@ -52,7 +52,7 @@ def split_xy(x, y_list):
     return torch.FloatTensor(x).to(device), torch.FloatTensor(y).to(device)
 
 
-x = prepdata('C:\\Users\\Ahmet\\ETH_Master\\DeepLearning\\feature_learning_project\\Datasets\\housing.data')
+x = prepdata('datasets/housing.data')
 x, y = split_xy(x, [13])  # [13, 4] for evaluating both
 
 def train_and_test(X, y, nnet, mon_dim, b1, b2, bs, lr, max_epochs=1000, nsplits=5, printout=100, show_pred=False):
@@ -93,8 +93,9 @@ def train_and_test(X, y, nnet, mon_dim, b1, b2, bs, lr, max_epochs=1000, nsplits
                 # nn.utils.clip_grad_norm_(net.parameters(), max_norm=clip_norm)
                 optimizer.step()
                 # clamp zero vals
-                # with torch.no_grad():
-                #     net.lin_hidden.weight.clamp_(0.)
+                if isinstance(net, Poly_Net):
+                    with torch.no_grad():
+                        net.lin_hidden.weight.clamp_(0.)
                 # print statistics
                 running_loss += loss.item()
             k_loss[j].append(running_loss/len(training_data))
@@ -147,7 +148,7 @@ def k_plots(k_losses, colors):
     plt.show()
 
 
-poly_k_loss, poly_v_loss = train_and_test(X=x, y=y, nnet='poly', mon_dim=100, b1=False, b2=False, bs=8, lr=0.0005,
+poly_k_loss, poly_v_loss = train_and_test(X=x, y=y, nnet='poly', mon_dim=100, b1=False, b2=True, bs=8, lr=0.0005,
                                           max_epochs=5000, nsplits=5, printout=500)
 
 k_plots([poly_k_loss], ['blue'])
