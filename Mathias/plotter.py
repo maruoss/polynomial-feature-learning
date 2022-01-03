@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 import matplotlib.pyplot as plt
-from torch._C import device
 
 
 class predictions:
@@ -50,11 +49,11 @@ class predictions:
             function_name = "exp(x)"
         elif self.target_fn.__name__ == "logf":
             function_name = "log(x)"
-        
+            
         if self.model.__class__.__name__ == "PolyModel":
-            ax[0].set_title(f"{function_name} learned with {len(self.model.l1.weight)} Monomials")
+            ax[0].set_title(f"{function_name} with {len(self.model.l1.weight)} Monomials after {self.model.current_epoch+1} Epochs")
         elif self.model.__class__.__name__ == "StandardModel":
-            ax[0].set_title(f"{function_name} learned with {len(self.model.l1.weight)} Neurons")
+            ax[0].set_title(f"{function_name} with {len(self.model.l1.weight)} Neurons after {self.model.current_epoch+1} Epochs")
         
         ax[0].plot(self.x, y, label="groundtruth", color="red")
         ax[0].plot(self.x, y_pred.cpu(), label="learned function", color="orange")
@@ -82,9 +81,9 @@ class predictions:
         y = self.target_fn(self.x)
 
         if self.model.__class__.__name__ == "PolyModel":
-            ax[1].set_title(f"{function_name} learned with {len(self.model.l1.weight)} Monomials")
+            ax[1].set_title(f"{function_name} with {len(self.model.l1.weight)} Monomials after {self.model.current_epoch+1} Epochs")
         elif self.model.__class__.__name__ == "StandardModel":
-            ax[1].set_title(f"{function_name} learned with {len(self.model.l1.weight)} Neurons")
+            ax[1].set_title(f"{function_name} with {len(self.model.l1.weight)} Neurons after {self.model.current_epoch+1} Epochs")
 
         ax[1].plot(self.x, y, label="groundtruth", color="red")
         ax[1].plot(self.x, y_pred.cpu(), label="learned function", color="orange")
