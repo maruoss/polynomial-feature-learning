@@ -190,7 +190,7 @@ LEARNING_RATE = 1e-5
 
 # Plotting options, oos = to plot testing out-of-sample points
 LOW_OOS = 0.01 #only affects plots, needs oos=True
-HIGH_OOS = 7. #only affects plots, needs oos=True
+HIGH_OOS = 9. #only affects plots, needs oos=True
 
 # CHECKPOINTS + SAVING PLOTS
 PLOT_EVERY_N_EPOCHS = 10000 # has to be a multiple of "check_val_every_n_epoch"
