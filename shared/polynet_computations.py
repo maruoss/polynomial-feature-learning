@@ -49,6 +49,9 @@ def prep_data(x_train, x_test, y_train, y_test):
     scaler.fit(x_train)
     x_train = scaler.transform(x_train)
     x_test = scaler.transform(x_test)
+    # eliminate negative values
+    x_test[x_test < 1] = 1
+    x_test[x_test > math.exp(1)] = math.exp(1)
     # prep y data
     y_train = pd.DataFrame(data=y_train)
     z_scores = y_train.apply(scipy.stats.zscore, nan_policy='omit')
@@ -63,7 +66,7 @@ def prep_data(x_train, x_test, y_train, y_test):
         device), torch.FloatTensor(y_test).to(device)
 
 
-x, y = read_data('datasets/housing.data', [13])  # [13, 4] for predicting both PRICE and NOX
+x, y = read_data('datasets/housing.data', [13, 4])  # [13] for only predicting PRICE and not NOX
 
 
 def train_and_test(X, y, nnet, mon_dim, b1, b2, bs, lr, max_epochs=1000, nsplits=5, printout=100, show_pred=False):
@@ -89,8 +92,8 @@ def train_and_test(X, y, nnet, mon_dim, b1, b2, bs, lr, max_epochs=1000, nsplits
             net = Relu_Net(input_dim, mon_dim, out_dim, b1, b2)
         net.to(device)
         criterion = nn.MSELoss()
-        # optimizer = optim.SGD(net.parameters(), lr=lr, momentum=momentum)
-        optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=0.005)
+        optimizer = optim.SGD(net.parameters(), lr=lr, momentum=0.8)
+        # optimizer = optim.Adam(net.parameters(), lr=lr, weight_decay=0.005)
         training_data = DataLoader(list(zip(X_train, y_train)), batch_size=bs, shuffle=True)
         for epoch in range(max_epochs):  # loop over the dataset multiple times
             running_loss = 0.0
