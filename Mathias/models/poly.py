@@ -26,13 +26,11 @@ class PolyModel(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
 
-        # self.l0 = nn.Linear(input_dim, input_dim, bias=False) # even when not used influences random initialization of l1 and l2 layers (random process)
         self.l1 = nn.Linear(input_dim, hidden_dim, bias=False)
         self.l2 = nn.Linear(hidden_dim, 1, bias=True)
 
         with torch.no_grad(): # should be preferred instead of weight.data.uniform
-            self.l1.weight.uniform_(0., 1.) # Dont initialize negative values. To mitigate nan problem.
-            # self.l2.weight.uniform_(0., 1. / np.sqrt(input_dim)) # Dont initialize negative values -> can get l1 weight to negative weights!
+            self.l1.weight.uniform_(0., 2./ input_dim) # Dont initialize negative values. To mitigate nan problem.
     
     def get_exponents(self):
         return self.l1.weight.detach().cpu().numpy()
@@ -48,19 +46,16 @@ class PolyModel(pl.LightningModule):
             self.l1.weight.clamp_(0.)
 
     def forward(self, x):
-        # return self.l2(torch.exp(self.l1(torch.log(self.l0(x.view(x.size(0), -1))))))
         return self.l2(torch.exp(self.l1(torch.log(x.view(x.size(0), -1)))))
 
     def configure_optimizers(self):
         return torch.optim.SGD(self.parameters(), lr=self.hparams.learning_rate, momentum=0.9, nesterov=True)
-
 
     def training_step(self, batch, batch_idx):
         x, y = batch
         y_hat = self(x)
         loss = F.mse_loss(y_hat, y)
         self.log("loss/loss", loss, on_epoch=False, prog_bar=True)
-        # self.log('metrics/r2', r2_score(y_hat, y), on_epoch=False, prog_bar=True)
 
         return loss
 
@@ -121,7 +116,7 @@ class PolyModel(pl.LightningModule):
                 plt.savefig(path, facecolor="white")
                 plt.close()
 
-            plt.show() #to free memory
+            # plt.show() #to free memory
 
             # # Condense paths into arrays
             # exponent_path = np.stack(self.exponent_path).squeeze(-1) #shape(2, 3)
@@ -212,10 +207,6 @@ class PolyModel(pl.LightningModule):
                 
 
         return
-
-    # def validation_epoch_end(self, outputs):
-        # avg_pred = torch.cat([x["y_hat"] for x in outputs]).mean()
-        # self.log("avg_pred_epoch", avg_pred, prog_bar=True)
 
     def test_step(self, batch, batch_idx):
         x, y = batch

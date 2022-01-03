@@ -99,5 +99,5 @@ class predictions:
         ax[1].set_xlabel("x")
         ax[1].set_ylabel("y")
         ax[1].legend()
-        plt.autoscale(enable=False) # to autoscale axes if difference gets small
+        # plt.autoscale(enable=False) # to autoscale axes if difference gets small
         # plt.show() # plt.show() before plt.savefig saves empty figure

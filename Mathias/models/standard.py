@@ -26,8 +26,6 @@ class StandardModel(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
 
-        # Standard NN regression layers
-        # self.l0 = nn.Linear(input_dim, input_dim, bias=False) # even when not used influences random initialization of l1 and l2 layers (random process)
         self.l1 = nn.Linear(input_dim, hidden_dim, bias=False)
         self.l2 = nn.Linear(hidden_dim, 1, bias=True)
 
@@ -52,7 +50,6 @@ class StandardModel(pl.LightningModule):
         y_hat = self(x)
         loss = F.mse_loss(y_hat, y)
         self.log("loss/loss", loss, on_epoch=False, prog_bar=True)
-        # self.log('metrics/r2', r2_score(y_hat, y), on_epoch=False, prog_bar=True)
 
         return loss
     
@@ -88,7 +85,6 @@ class StandardModel(pl.LightningModule):
         loss = F.mse_loss(y_hat, y)
 
         self.log("loss/val_loss", loss, prog_bar=True)
-        # self.log("metrics/val_r2", r2_score(y_hat, y), prog_bar=True)
 
         return {"val_loss": loss,"y_hat": y_hat}
 
@@ -114,15 +110,10 @@ class StandardModel(pl.LightningModule):
 
         return
 
-    # def validation_epoch_end(self, outputs):
-        # avg_pred = torch.cat([x["y_hat"] for x in outputs]).mean()
-        # self.log("avg_pred_epoch", avg_pred, prog_bar=True)
-
     def test_step(self, batch, batch_idx):
         x, y = batch
         y_hat = self(x)
         loss = F.mse_loss(y_hat, y)
 
         self.log("loss/test_loss", loss, prog_bar=True)
-        # self.log("metrics/test_r2", r2_score(y_hat, y), prog_bar=True)
         return loss

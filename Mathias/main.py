@@ -153,7 +153,6 @@ NUM_EPOCHS = 250000
 LEARNING_RATE = 1e-5
 
 # Plotting options, oos = to plot testing out-of-sample points
-OOS = True
 LOW_OOS = 0.01 #only affects plots, needs oos=True
 HIGH_OOS = 7. #only affects plots, needs oos=True
 
@@ -233,7 +232,6 @@ trainer.test(
 # %%
 # Show predictions and save plot
 plotter = predictions(dm, model, low_oos=LOW_OOS, high_oos=HIGH_OOS, target_fn=TARGET_FN)
-fig = plt.figure(figsize=(7, 5))
 plotter.plot()
 plt.tight_layout()
 path = os.path.join(logger.log_dir, f"final_predictions_{NUM_EPOCHS}.png")
