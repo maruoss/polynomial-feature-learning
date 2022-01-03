@@ -272,7 +272,7 @@ trainer.test(
 )
 
 # %%
-# Show predictions and save plot
+# Show model predictions and save plot (creates 3 plots next to each other with different zoom levels)
 plotter = predictions(dm, model, low_oos=LOW_OOS, high_oos=HIGH_OOS, target_fn=TARGET_FN)
 plotter.plot()
 plt.tight_layout()
@@ -283,7 +283,8 @@ plt.show()
 # print(f"X_test: {plotter.X_test}")
 # print(f"y_pred_test: {plotter.y_pred_test}")
 
-# %%
+#
+# Plot 3 Power Series plots each zoomed differently ***************************************************
 from numpy.polynomial import Polynomial as T
 
 # get X_train domain
@@ -392,66 +393,359 @@ plt.savefig(path, facecolor="white")
 plt.show()
 
 
-#%%
+# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# GRIDPLOTTING
 
-# x = dm.X_train.squeeze()
-# y = dm.y_train.squeeze()
+# %%
 
-# from numpy.polynomial import Polynomial as T
-# p = T.fit(x, y, deg=3)
-# xx, yy = p.linspace(200, [1., 5.])
-# # Unnormalize
-# yy = yy * dm.target_std.item() + dm.target_mean.item()
-# plt.plot(x, y_train_noisy, 'o')
-# plt.plot(xx, yy, lw=2)
-# # p.domain9
-# p.window
-# p.degree
-# plt.show()
+# Specify your absolute Model Paths here
+ax1_polynomialf_polymodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+ax2_polynomialf_standardmodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
 
+ax4_sinf_polymodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+ax5_sinf_standardmodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
 
-#%%%
-# # Show plot LAYER 1 WEIGHT/ EXPONENTS and save
-# if model.__class__.__name__ == "PolyModel":
-#     exponent_path = np.stack(model.exponent_path).squeeze(-1) #shape(2, 3)
-#     coefficient_path = np.stack(model.coefficient_path).squeeze(-1) # shape (2, 3)
-# elif model.__class__.__name__ == "StandardModel":
-#     exponent_path = np.stack(model.l1_weights).squeeze(-1) #shape(2, 3)
-#     coefficient_path = np.stack(model.l2_weights).squeeze(-1) # shape (2, 3)
-# bias_path = np.stack(model.bias_path).squeeze(-1) # shape (2, 1)
+ax7_cosinef_polymodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+ax8_cosinef_standardmodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
 
-# fig, ax = plt.subplots(1, 2, figsize = (14, 5))
-# # Exponents
-# for i in range(exponent_path.shape[-1]):
-#     ax[0].plot(exponent_path[:, i])
-# if TARGET_FN.__name__ == "constantf":
-#     ax[0].axhline(0, label='Target Rank', c="red", ls="--")
-# if TARGET_FN.__name__ == "linearf":
-#     ax[0].axhline(1, label='Target Rank', c="red", ls="--")
-# if TARGET_FN.__name__  in ["polynomialf", "polynomialf_noise"]:
-#     ax[0].axhline(3, label='Target Rank', c="red", ls="--") #rank 3 monomial
-#     ax[0].axhline(2, label='Target Rank', c="red", ls="--") #rank 2 monomial
-#     ax[0].axhline(1, label='Target Rank', c="red", ls="--")      
-#     ax[0].axhline(0, label='Target Rank', c="red", ls="--")
+ax10_expf_polymodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+ax11_expf_standardmodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
 
-# ax[0].set_title("Learned Exponent Paths")
-# ax[0].set_xlabel("Epoch")
-# ax[0].set_ylabel("Exponent Value")
-
-
-# # Coefficients
-# for i in range(coefficient_path.shape[-1]):
-#     ax[1].plot(coefficient_path[:, i])
-                    
-# ax[1].set_title("Learned Coefficient Paths")
-# ax[1].set_xlabel("Epoch")
-# ax[1].set_ylabel("Coefficient Value")
-
-
-# # Save figure
-# path = os.path.join(logger.log_dir, f"final_exponents_coefficients_{NUM_EPOCHS}.png")
-# plt.savefig(path, facecolor="white")
-# plt.show()
+ax13_logf_polymodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+ax14_logf_standardmodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
 
 
 # %%
+# Domain that models were trained on
+LOW = 1.
+HIGH = 5.
+# Set range x-axis to plot
+LOW_OOS = 0.
+HIGH_OOS = 7.
+# Monomials = # Neurons = Degree Power Series
+HIDDEN_DIM = 10
+
+# Create x for groundtruth and predicted function
+X_train = torch.linspace(LOW, HIGH, 200)
+x = torch.linspace(LOW_OOS, HIGH_OOS, 200)
+
+fig = plt.figure(figsize=(15, 15))
+gs = fig.add_gridspec(5, 3, hspace=0, wspace=0)
+(ax1, ax2, ax3), (ax4, ax5, ax6), (ax7, ax8, ax9), (ax10, ax11, ax12), (ax13, ax14, ax15) = gs.subplots(sharex='col', sharey='row')
+
+# codomain to plot
+ax1.set_ylim(-5, 15) # polynomial f.
+ax4.set_ylim(-4, 4) # sine f.
+ax7.set_ylim(-4, 4) # cosine f.
+ax10.set_ylim(-5, 30) # exp f.
+ax13.set_ylim(-4, 4) # log f.
+
+# Fix x axis
+ax1.set_xlim(0, 7.)
+ax2.set_xlim(0, 7.)
+ax3.set_xlim(0, 7.)
+
+# titles
+# fig.suptitle('Title overall')
+ax1.set_title("Polynomial NN")
+ax2.set_title("ReLU NN")
+ax3.set_title("Polynomials up to degree 10")
+
+ax1.set(ylabel="polynomial")
+ax4.set(ylabel="sin(x)")
+ax7.set(ylabel="cos(x)")
+ax10.set(ylabel="exp(x-4)")
+ax13.set(ylabel="log(x)")
+
+# ax[0].tick_params(axis='y', rotation=90)
+
+# ******************************************************************************
+# Polynomial function
+# Groundtruth Polynomial
+y = 0.2*x**3 - 1.5*x**2 + 3.6*x - 2.5
+
+# Load necessary files
+target_mean = torch.load(f"y_train_noisy/MEAN.polynomialf.low{LOW}.high{HIGH}.pt")
+target_std = torch.load(f"y_train_noisy/STD.polynomialf.low{LOW}.high{HIGH}.pt")
+X_train = torch.load(f"X_train/uniform_args.low{LOW}.high{HIGH}.pt")
+y_train_noisy = torch.load(f"y_train_noisy/polynomialf.low{LOW}.high{HIGH}.pt")
+
+
+# ***** PolyNet *****
+# Load trained model
+# path1 = path.joinpath(relpath_polynomialf_polymodel)
+model = model.load_from_checkpoint(ax1_polynomialf_polymodel)
+with torch.no_grad():
+    y_pred = model(x.to(torch.device(model.device)))
+
+# Unnormalize predictions
+y_pred = y_pred * target_std + target_mean
+
+# Plot everything
+ax1.plot(x, y, label="groundtruth", color="red")
+ax1.plot(x, y_pred.cpu(), label="learned function", color="orange")
+ax1.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+
+# **** ReLUNet ****
+# Load trained model
+model = model.load_from_checkpoint(ax2_polynomialf_standardmodel)
+with torch.no_grad():
+    y_pred = model(x.to(torch.device(model.device)))
+
+# Unnormalize predictions
+y_pred = y_pred * target_std + target_mean
+
+ax2.plot(x, y, label="groundtruth", color="red")
+ax2.plot(x, y_pred.cpu(), label="learned function", color="orange")
+ax2.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+
+# **** Power Series Fitting ****
+# Normalize y_train_noisy before fit as was done for other models
+y_train = (y_train_noisy - target_mean) / target_std
+# Fit
+p = T.fit(X_train.squeeze(), y_train.squeeze(), deg=HIDDEN_DIM)
+_, y_pred = p.linspace(200, domain=[LOW_OOS, HIGH_OOS])
+
+# Unnormalize Prediction
+y_pred = y_pred * target_std.item() + target_mean.item()
+
+ax3.plot(x, y, label="groundtruth", color="red")
+ax3.plot(x, y_pred, label="learned function", color="orange")
+ax3.scatter(X_train, y_train_noisy, alpha=0.2, label="training set", color="tab:blue")
+
+
+# ************************************************************************************
+# Sine function
+# Groundtruth sine
+y = torch.sin(x)
+
+# Load necessary files
+target_mean = torch.load(f"y_train_noisy/MEAN.sinf.low{LOW}.high{HIGH}.pt")
+target_std = torch.load(f"y_train_noisy/STD.sinf.low{LOW}.high{HIGH}.pt")
+X_train = torch.load(f"X_train/uniform_args.low{LOW}.high{HIGH}.pt")
+y_train_noisy = torch.load(f"y_train_noisy/sinf.low{LOW}.high{HIGH}.pt")
+
+
+# ***** PolyNet *****
+# Load trained model
+model = model.load_from_checkpoint(ax4_sinf_polymodel)
+with torch.no_grad():
+    y_pred = model(x.to(torch.device(model.device)))
+
+# Unnormalize predictions
+y_pred = y_pred * target_std + target_mean
+
+# Plot everything
+ax4.plot(x, y, label="groundtruth", color="red")
+ax4.plot(x, y_pred.cpu(), label="learned function", color="orange")
+ax4.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+
+# **** ReLUNet ****
+# Load trained model
+model = model.load_from_checkpoint(ax5_sinf_standardmodel)
+with torch.no_grad():
+    y_pred = model(x.to(torch.device(model.device)))
+
+# Unnormalize predictions
+y_pred = y_pred * target_std + target_mean
+
+ax5.plot(x, y, label="groundtruth", color="red")
+ax5.plot(x, y_pred.cpu(), label="learned function", color="orange")
+ax5.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+
+# **** Power Series Fitting ****
+# Normalize y_train_noisy before fit as was done for other models
+y_train = (y_train_noisy - target_mean) / target_std
+# Fit
+p = T.fit(X_train.squeeze(), y_train.squeeze(), deg=HIDDEN_DIM)
+_, y_pred = p.linspace(200, domain=[LOW_OOS, HIGH_OOS])
+
+# Unnormalize prediction
+y_pred = y_pred * target_std.item() + target_mean.item()
+
+ax6.plot(x, y, label="groundtruth", color="red")
+ax6.plot(x, y_pred, label="learned function", color="orange")
+ax6.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+
+# ************************************************************************************
+# cosine function
+# Groundtruth cosine
+y = torch.cos(x)
+
+# Load necessary files
+target_mean = torch.load(f"y_train_noisy/MEAN.cosinef.low{LOW}.high{HIGH}.pt")
+target_std = torch.load(f"y_train_noisy/STD.cosinef.low{LOW}.high{HIGH}.pt")
+X_train = torch.load(f"X_train/uniform_args.low{LOW}.high{HIGH}.pt")
+y_train_noisy = torch.load(f"y_train_noisy/cosinef.low{LOW}.high{HIGH}.pt")
+
+
+# ***** PolyNet *****
+# Load trained model
+model = model.load_from_checkpoint(ax7_cosinef_polymodel)
+with torch.no_grad():
+    y_pred = model(x.to(torch.device(model.device)))
+
+# Unnormalize predictions
+y_pred = y_pred * target_std + target_mean
+
+# Plot everything
+ax7.plot(x, y, label="groundtruth", color="red")
+ax7.plot(x, y_pred.cpu(), label="learned function", color="orange")
+ax7.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+
+# **** ReLUNet ****
+# Load trained model
+model = model.load_from_checkpoint(ax8_cosinef_standardmodel)
+with torch.no_grad():
+    y_pred = model(x.to(torch.device(model.device)))
+
+# Unnormalize predictions
+y_pred = y_pred * target_std + target_mean
+
+ax8.plot(x, y, label="groundtruth", color="red")
+ax8.plot(x, y_pred.cpu(), label="learned function", color="orange")
+ax8.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+
+# **** Power Series Fitting ****
+# Normalize y_train_noisy before fit as was done for other models
+y_train = (y_train_noisy - target_mean) / target_std
+# Fit
+p = T.fit(X_train.squeeze(), y_train.squeeze(), deg=HIDDEN_DIM)
+_, y_pred = p.linspace(200, domain=[LOW_OOS, HIGH_OOS])
+
+# Unnormalize prediction
+y_pred = y_pred * target_std.item() + target_mean.item()
+
+ax9.plot(x, y, label="groundtruth", color="red")
+ax9.plot(x, y_pred, label="learned function", color="orange")
+ax9.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+
+# ***********************************************************************************
+# exp function
+# Groundtruth exp
+y = torch.exp(x - 4)
+
+# Load necessary files
+target_mean = torch.load(f"y_train_noisy/MEAN.expf.low{LOW}.high{HIGH}.pt")
+target_std = torch.load(f"y_train_noisy/STD.expf.low{LOW}.high{HIGH}.pt")
+X_train = torch.load(f"X_train/uniform_args.low{LOW}.high{HIGH}.pt")
+y_train_noisy = torch.load(f"y_train_noisy/expf.low{LOW}.high{HIGH}.pt")
+
+# ***** PolyNet *****
+# Load trained model
+model = model.load_from_checkpoint(ax10_expf_polymodel)
+with torch.no_grad():
+    y_pred = model(x.to(torch.device(model.device)))
+
+# Unnormalize predictions
+y_pred = y_pred * target_std + target_mean
+
+# Plot everything
+ax10.plot(x, y, label="groundtruth", color="red")
+ax10.plot(x, y_pred.cpu(), label="learned function", color="orange")
+ax10.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+
+# **** ReLUNet ****
+# Load trained model
+model = model.load_from_checkpoint(ax11_expf_standardmodel)
+with torch.no_grad():
+    y_pred = model(x.to(torch.device(model.device)))
+
+# Unnormalize predictions
+y_pred = y_pred * target_std + target_mean
+
+ax11.plot(x, y, label="groundtruth", color="red")
+ax11.plot(x, y_pred.cpu(), label="learned function", color="orange")
+ax11.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+
+# **** Power Series Fitting ****
+# Normalize y_train_noisy before fit as was done for other models
+y_train = (y_train_noisy - target_mean) / target_std
+# Fit
+p = T.fit(X_train.squeeze(), y_train.squeeze(), deg=HIDDEN_DIM)
+_, y_pred = p.linspace(200, domain=[LOW_OOS, HIGH_OOS])
+
+# Unnormalize prediction
+y_pred = y_pred * target_std.item() + target_mean.item()
+
+ax12.plot(x, y, label="groundtruth", color="red")
+ax12.plot(x, y_pred, label="learned function", color="orange")
+ax12.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+# ***********************************************************************************
+# log function
+# Groundtruth log
+y = torch.log(x)
+
+# Load necessary files
+target_mean = torch.load(f"y_train_noisy/MEAN.logf.low{LOW}.high{HIGH}.pt")
+target_std = torch.load(f"y_train_noisy/STD.logf.low{LOW}.high{HIGH}.pt")
+X_train = torch.load(f"X_train/uniform_args.low{LOW}.high{HIGH}.pt")
+y_train_noisy = torch.load(f"y_train_noisy/logf.low{LOW}.high{HIGH}.pt")
+
+# ***** PolyNet *****
+# Load trained model
+model = model.load_from_checkpoint(ax13_logf_polymodel)
+with torch.no_grad():
+    y_pred = model(x.to(torch.device(model.device)))
+
+# Unnormalize predictions
+y_pred = y_pred * target_std + target_mean
+
+# Plot everything
+ax13.plot(x, y, label="groundtruth", color="red")
+ax13.plot(x, y_pred.cpu(), label="learned function", color="orange")
+ax13.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+
+# **** ReLUNet ****
+# Load trained model
+model = model.load_from_checkpoint(ax14_logf_standardmodel)
+with torch.no_grad():
+    y_pred = model(x.to(torch.device(model.device)))
+
+# Unnormalize predictions
+y_pred = y_pred * target_std + target_mean
+
+ax14.plot(x, y, label="groundtruth", color="red")
+ax14.plot(x, y_pred.cpu(), label="learned function", color="orange")
+ax14.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+
+# **** Power Series Fitting ****
+# Normalize y_train_noisy before fit as was done for other models
+y_train = (y_train_noisy - target_mean) / target_std
+# Fit
+p = T.fit(X_train.squeeze(), y_train.squeeze(), deg=HIDDEN_DIM)
+_, y_pred = p.linspace(200, domain=[LOW_OOS, HIGH_OOS])
+
+# Unnormalize prediction
+y_pred = y_pred * target_std.item() + target_mean.item()
+
+ax15.plot(x, y, label="groundtruth", color="red")
+ax15.plot(x, y_pred, label="learned function", color="orange")
+ax15.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+#* *************************************************************************************
+# Make everything tight
+gs.tight_layout(fig)
+
+# Save gridplot
+fig.savefig("gridplot", facecolor="white")
+plt.show()
+
+
+
+
+
+
