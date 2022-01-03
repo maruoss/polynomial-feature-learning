@@ -24,41 +24,52 @@ print('cuda available: ', torch.cuda.is_available())
 device = "cpu"
 
 
-#use minmax scaler instead
-def prepdata(x):
-    x = pd.read_csv(x, sep="\s+", header=None)
+def read_data(path, y_list, s="\s+"):
+    x = pd.read_csv(path, sep=s, header=None)
     # x = pd.DataFrame(x)
-    z_scores = x.apply(scipy.stats.zscore, nan_policy='omit')
-    # print(z_scores)
-    # print(x.size)
-    # x.where(abs(z_scores) < 3, inplace=True)
-    # print(x.isna().any(axis=0))
-    x = x.fillna(x.mean())
     x = x.to_numpy()
-    scaler = MinMaxScaler((1, math.exp(1)))
-    scaler.fit(x)
-    x = scaler.transform(x)
-    return x
-
-
-def split_xy(x, y_list):
     y = []
     y_list.sort(reverse=True)
     for i in y_list:
-        y.append(x[:,i])
+        y.append(x[:, i])
         # housing_normed = np.delete(housing_normed, 4, 1)
         x = np.delete(x, i, 1)
     y = np.transpose(y)
-    return torch.FloatTensor(x).to(device), torch.FloatTensor(y).to(device)
+    return x, y
 
 
-x = prepdata('datasets/housing.data')
-x, y = split_xy(x, [13])  # [13, 4] for evaluating both
+def prep_data(x_train, x_test, y_train, y_test):
+    # prep x data
+    x_train = pd.DataFrame(data=x_train)
+    z_scores = x_train.apply(scipy.stats.zscore, nan_policy='omit')
+    x_train.where(abs(z_scores) < 3, inplace=True)
+    x_train = x_train.fillna(x_train.mean())
+    x_train = x_train.to_numpy()
+    scaler = MinMaxScaler((1, math.exp(1)))
+    scaler.fit(x_train)
+    x_train = scaler.transform(x_train)
+    x_test = scaler.transform(x_test)
+    # prep y data
+    y_train = pd.DataFrame(data=y_train)
+    z_scores = y_train.apply(scipy.stats.zscore, nan_policy='omit')
+    y_train.where(abs(z_scores) < 3, inplace=True)
+    y_train = y_train.fillna(y_train.mean())
+    y_train = y_train.to_numpy()
+    # scaler = MinMaxScaler((1, math.exp(1)))
+    scaler.fit(y_train)
+    y_train = scaler.transform(y_train)
+    y_test = scaler.transform(y_test)
+    return torch.FloatTensor(x_train).to(device), torch.FloatTensor(x_test).to(device), torch.FloatTensor(y_train).to(
+        device), torch.FloatTensor(y_test).to(device)
+
+
+x, y = read_data('datasets/housing.data', [13])  # [13, 4] for predicting both PRICE and NOX
+
 
 def train_and_test(X, y, nnet, mon_dim, b1, b2, bs, lr, max_epochs=1000, nsplits=5, printout=100, show_pred=False):
     # X, y = make_data(n, f_num)
     strt=time.time()
-    input_dim = X.size(dim=1)
+    input_dim = X.shape[1]
     kf = KFold(n_splits=nsplits, shuffle=True)
     # loss list for every k fold
     k_loss = [[] for _ in range(nsplits)]
@@ -69,6 +80,7 @@ def train_and_test(X, y, nnet, mon_dim, b1, b2, bs, lr, max_epochs=1000, nsplits
         # print(type(train_index), type(test_index))
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
+        X_train, X_test, y_train, y_test = prep_data(X_train, X_test, y_train, y_test)
         # prev_loss = inf
         out_dim = y.shape[1]
         if nnet == 'poly':
@@ -114,8 +126,7 @@ def train_and_test(X, y, nnet, mon_dim, b1, b2, bs, lr, max_epochs=1000, nsplits
 
 
 def train_and_test_linreg(X, y, nsplits=5):
-    # X, y = make_data(n, f_num)
-    input_dim = X.size(dim=1)
+    input_dim = X.shape[1]
     kf = KFold(n_splits=nsplits, shuffle=True)
     # loss list for every k fold
     val_loss = []
@@ -125,11 +136,13 @@ def train_and_test_linreg(X, y, nsplits=5):
         # print(type(train_index), type(test_index))
         X_train, X_test = X[train_index], X[test_index]
         y_train, y_test = y[train_index], y[test_index]
+        X_train, X_test, y_train, y_test = prep_data(X_train, X_test, y_train, y_test)
         lr = LinearRegression()
         lr.fit(X_train, y_train)
         y_pred = lr.predict(X_test)
         loss = mean_squared_error(y_test, y_pred)
         val_loss.append(loss)
+        print('val loss: ', loss)
     print('average loss: ', sum(val_loss)/nsplits)
     return val_loss
 
@@ -148,8 +161,10 @@ def k_plots(k_losses, colors):
         plt.plot(avgs, color=colors[i])
     plt.show()
 
+poly_k_loss, poly_v_loss = train_and_test(X=x, y=y, nnet='poly', mon_dim=100, b1=False, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=5, printout=500)
 
-poly_k_loss, poly_v_loss = train_and_test(X=x, y=y, nnet='poly', mon_dim=100, b1=False, b2=True, bs=8, lr=0.0005,
-                                          max_epochs=5000, nsplits=5, printout=500)
+net_k_loss, net_v_loss = train_and_test(X=x, y=y, nnet='net', mon_dim=100, b1=True, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=5, printout=500)
+
+linreg_v_loss = train_and_test_linreg(X=x, y=y, nsplits=5)
 
 k_plots([poly_k_loss], ['blue'])
