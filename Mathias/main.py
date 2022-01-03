@@ -446,10 +446,10 @@ ax2.set_xlim(0, 7.)
 ax3.set_xlim(0, 7.)
 
 # titles
-# fig.suptitle('Title overall')
-ax1.set_title("Polynomial NN")
-ax2.set_title("ReLU NN")
-ax3.set_title("Polynomials up to degree 10")
+# fig.suptitle(f"Functions fitted with {HIDDEN_DIM} Monomials/ hidden Neurons/ Degree")
+ax1.set_title(f"Polynomial NN with {HIDDEN_DIM} Monomials")
+ax2.set_title(f"ReLU NN with {HIDDEN_DIM} Neurons")
+ax3.set_title(f"Power Series up to degree {HIDDEN_DIM}")
 
 ax1.set(ylabel="polynomial")
 ax4.set(ylabel="sin(x)")
