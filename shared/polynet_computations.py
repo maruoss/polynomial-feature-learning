@@ -52,7 +52,9 @@ def read_forest_data(path):
     fd = forest_data.drop(['month', 'day', 'area'], axis=1)
     forest_months = forest_data['month'].to_list()
     forest_days = forest_data['day'].to_list()
-    y = np.transpose([forest_data['area'].to_list()])
+    # apply log(x+1 to forest area data)
+    area = [math.log(a+1) for a in forest_data['area'].to_list()]
+    y = np.transpose([area])
     fd = fd.to_numpy()
     f_data = [[0 for _ in range(len(month_list)+len(day_list))] for _ in range(len(forest_months))]
     for i, m in enumerate(forest_months):
@@ -203,8 +205,6 @@ x_f, y_f = read_forest_data('datasets/forestfires.csv')
 # print(net_v_loss)
 
 # linreg_v_loss = train_and_test_linreg(X=x, y=y, nsplits=10)
-
-# k_plots([poly_k_loss], ['blue'])
 
 # poly housing
 # poly_k_loss, poly_v_loss = train_and_test(X=x, y=y, nnet='poly', mon_dim=100, b1=False, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=10, printout=1000)
