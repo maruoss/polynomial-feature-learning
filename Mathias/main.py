@@ -5,9 +5,7 @@ from pytorch_lightning.callbacks import ModelCheckpoint
 
 # files
 from models.poly import PolyModel
-from models.linear import LinearModel
 from models.standard import StandardModel
-from models.standard_deep import StandardDeepModel
 from datamodule import MyDataModule
 from functions import polynomialf, sinf, cosinef, expf, logf, uniform_args, normal_args, linspace_args, truncated_normal
 
@@ -17,24 +15,28 @@ warnings.filterwarnings("ignore", ".*Consider increasing the value of the `num_w
 warnings.filterwarnings("ignore", category=DeprecationWarning) 
 
 
-# *****************************************************************************************************************
-# To reproduce the gridplot of the toy examples in our paper "Polynomial Feature Learning:"
+# ************ LEARNING SIMPLE FUNCTIONS WITH 10 MONOMIALS/ NEURONS ***********************************************
+
+# Instructions to reproduce the gridplot of the toy examples in our paper "Polynomial Feature Learning":
 
 # 1. To reproduce the toy plots of the paper set seed to 42:
 seed_everything(42, workers=True)
 
-# 2. Choose function out of [polynomialf, sinf, cosinef, expf, logf]
+# 2. Choose function out of [polynomialf, sinf, cosinef, expf, logf] # Note: the polynomial function looks like this: 0.2*x**3 - 1.5*x**2 + 3.6*x - 2.5.
 TARGET_FN = polynomialf
 
-# 3. Choose model class on line 70:
-# [PolyModel] for Polynomial NN
+# 3. Specify model class here:
+NN_ARCHITECTURE = PolyModel
+# [PolyModel] for our Polynomial NN
 # [StandardModel] for ReLU NN
 
-# 4. Wait for training to end and use saved checkpoint in the gridplotter.py file.
+# 4. Wait for training to end and use saved checkpoint "last.ckpt" later in Step 6.
 
-# 5. When checkpoints for all functions and both network architectures are saved, specify their paths in the gridplotter.py file.
+# 5. Repeat with all other 9 combinations of functions and NN architectures.
 
-# 6. Run the gridplotter.py file. Done!
+# 6. When checkpoints for all functions and both network architectures are saved, specify their paths in the gridplotter.py file.
+
+# 7. Run the gridplotter.py file. Done!
 
 # ******************************************************************************************************************
 # Hyperparameters
@@ -49,9 +51,9 @@ SAMPLE_FN = uniform_args #uniform args used for gridplot in paper [uniform_args,
 NOISE_LEVEL = 0.1 # 0.1 used for gridplot in paper
 
 # Learning algo
-HIDDEN_DIM = 10 # number of neurons in hidden layer [if PolyModel = number of monomials, if StandardModel (ReLU) = size of hidden neurons]
-BATCH_SIZE = 128
-NUM_EPOCHS = 10
+HIDDEN_DIM = 10 # 10 used for gridplot in paper. number of neurons in hidden layer [if PolyModel = number of monomials, if StandardModel (ReLU) = size of hidden layer]
+BATCH_SIZE = 128 # 128 used for gridplot in paper
+NUM_EPOCHS = 300000 # 1
 LEARNING_RATE = 1e-4
 
 
@@ -66,8 +68,8 @@ dm = MyDataModule(
     target_fn=TARGET_FN,
     noise_level=NOISE_LEVEL,
 )
-# Step 3.: choose PolyModel or StandardModel here (ReLU activations)
-model = PolyModel(
+
+model = NN_ARCHITECTURE(
     input_dim=DIM,
     hidden_dim=HIDDEN_DIM,
     learning_rate=LEARNING_RATE,
@@ -91,6 +93,7 @@ trainer = pl.Trainer(
     # enable_checkpointing = False,
     num_sanity_val_steps=0,
 )
-# 
+
+# Fit the model
 trainer.fit(model, dm)
 
