@@ -2,21 +2,15 @@ import numpy as np
 import torch
 
 class Monomial:
-    def __init__(self, indexes=[], offsets=None):
+    def __init__(self, indexes=[]):
         self.indexes = list(indexes)
-        
-        if offsets is None:
-            offsets = [0.] * len(self.indexes)
-        self.offsets = list(offsets)
-            
-        assert len(self.indexes) == len(self.offsets)
         
     def __call__(self, x):
         if not torch.is_tensor(x):
             x = torch.tensor(x)
         y = torch.ones(x.shape[:-1] + (1,))
-        for idx, off in zip(self.indexes, self.offsets):
-            y[...,0] *= (x[...,idx] - off)
+        for idx in self.indexes:
+            y[...,0] *= x[...,idx]
         return y
     
 #     def copy(self):
@@ -45,7 +39,7 @@ class Monomial:
 #         return self.indexes.pop(), self.offsetss.pop()
     
     @classmethod
-    def from_random_process(cls, max_index, degree, sigma=1., offset_distribution=None):
+    def from_random_process(cls, max_index, degree, sigma=1.):
         """Algorithm inspired by the chinese restaurant process."""
         assert max_index >= degree  # otherwise this function may fail unexpectedly
         all_indexes = list(range(max_index))
@@ -60,19 +54,15 @@ class Monomial:
                 next_index = np.random.choice(indexes)
             indexes.append(next_index)
         
-        if offset_distribution:
-            offsets = [offset_distribution() for _ in range(degree)]
-        else:
-            offsets = None
-        return cls(indexes, offsets)
+        return cls(indexes)
     
     def degree(self):
         return len(self.indexes)
     
     def __str__(self):
         factors = []
-        for idx, off in zip(self.indexes, self.offsets):
-            factors.append(f"(x_{{{idx}}} - {off})" if off else f"x_{{{idx}}}")
+        for idx in zip(self.indexes):
+            factors.append(f"x_{{{idx}}}")
         return '*'.join(factors)
     
     def __repr__(self):
@@ -82,24 +72,23 @@ class Monomial:
         if self.degree() == 0:
             return ""
         
-        if np.all(np.array(self.offsets)==0):
-            coeffs, counts = np.unique(self.indexes, return_counts=True)
-            factors = []
-            for coef, count in zip(coeffs, counts):
-                factors.append(f"x_{{{coef}}}")
-                if count > 1:
-                    factors.append(f"^{{{count}}}")
-        else:
-            factors = []
-            for idx, off in zip(self.indexes, self.offsets):
-                factors.append(f"(x_{{{idx}}} - {off})" if off else f"x_{{{idx}}}")
+        coeffs, counts = np.unique(self.indexes, return_counts=True)
+        factors = []
+        for coef, count in zip(coeffs, counts):
+            factors.append(f"x_{{{coef}}}")
+            if count > 1:
+                factors.append(f"^{{{count}}}")
 
         return ''.join(factors)
-                
     
-    # def get_simplified_polynomial(self):
-    #     """Remove the offsets."""
-    #     raise NotImplementedError()
+    def get_exponents(self, n_exponents = None):
+        if not n_exponents:
+            n_exponents = max(self.indexes)+1
+        exponents = np.zeros(n_exponents)
+        for idx in self.indexes:
+            exponents[idx] += 1
+        return exponents
+                
     
 class Polynomial:
     def __init__(self, monomials=None, coefficients=None):
@@ -129,12 +118,11 @@ class Polynomial:
     def from_random_monomials(cls, max_index, n_monomials,
                               coefficient_distribution,
                               degree_distribution,
-                              sigma=1.,
-                              offset_distribution=None):
+                              sigma=1.):
         
         coefficients = [coefficient_distribution() for _ in range(n_monomials)]
         degrees = [degree_distribution() for _ in range(n_monomials)]
-        monomials = [Monomial.from_random_process(max_index, degree, sigma, offset_distribution)
+        monomials = [Monomial.from_random_process(max_index, degree, sigma)
                      for degree in degrees]
         
         return cls(monomials, coefficients)
@@ -165,3 +153,9 @@ class Polynomial:
                 factors.append(' -')
             factors.append(f"{abs(coefficient):.{precision}f}{monomial.latex_string()}")
         return ''.join(factors)
+    
+    def get_exponents(self, n_exponents=None):
+        if not n_exponents:
+            n_exponents = 1 + max(max(m.indexes) for m in self.monomials)
+        exponents = np.stack([m.get_exponents(n_exponents) for m in self.monomials])
+        return exponents

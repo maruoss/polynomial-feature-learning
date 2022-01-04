@@ -18,6 +18,7 @@ import scipy
 from model import Poly_Net, Relu_Net
 
 print('cuda available: ', torch.cuda.is_available())
+KFOLD_SEED = 2104
 
 # use either cpu or gpu
 # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
