@@ -430,7 +430,7 @@ HIGH_OOS = 7.
 HIDDEN_DIM = 10
 
 # Create x for groundtruth and predicted function
-X_train = torch.linspace(LOW, HIGH, 200)
+x_insample = torch.linspace(LOW, HIGH, 200)
 x = torch.linspace(LOW_OOS, HIGH_OOS, 200)
 
 fig = plt.figure(figsize=(15, 15))
@@ -465,13 +465,16 @@ ax13.set(ylabel="log(x)")
 
 # ******************************************************************************
 # Polynomial function
+mse_losses_polynomial = []
+
 # Groundtruth Polynomial
 y = 0.2*x**3 - 1.5*x**2 + 3.6*x - 2.5
+y_insample = 0.2*x_insample**3 - 1.5*x_insample**2 + 3.6*x_insample - 2.5
 
 # Load necessary files
 target_mean = torch.load(f"y_train_noisy/MEAN.polynomialf.low{LOW}.high{HIGH}.pt")
 target_std = torch.load(f"y_train_noisy/STD.polynomialf.low{LOW}.high{HIGH}.pt")
-X_train = torch.load(f"X_train/uniform_args.low{LOW}.high{HIGH}.pt")
+X_train = torch.load(f"X_train/uniform_args.low{LOW}.high{HIGH}.pt") # the same for all functions
 y_train_noisy = torch.load(f"y_train_noisy/polynomialf.low{LOW}.high{HIGH}.pt")
 
 
@@ -481,29 +484,50 @@ y_train_noisy = torch.load(f"y_train_noisy/polynomialf.low{LOW}.high{HIGH}.pt")
 model = model.load_from_checkpoint(ax1_polynomialf_polymodel)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
+    y_pred_insample = model(x_insample.to(torch.device(model.device)))
 
 # Unnormalize predictions
 y_pred = y_pred * target_std + target_mean
+y_pred_insample = y_pred_insample * target_std + target_mean
 
 # Plot everything
 ax1.plot(x, y, label="groundtruth", color="red")
 ax1.plot(x, y_pred.cpu(), label="learned function", color="orange")
 ax1.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
 
+# %%
+# Calculate mse loss in sample (train) and out of sample (test)
+oos_loss = nn.functional.mse_loss(y_pred.squeeze(), y)
+ins_loss = nn.functional.mse_loss(y_pred_insample.squeeze(), y_insample)
+# Append to list
+mse_losses_polynomial.append((("oos_polymodel"), oos_loss.item()))
+mse_losses_polynomial.append((("ins_polymodel"), ins_loss.item()))
+
+
+#%%
 
 # **** ReLUNet ****
 # Load trained model
 model = model.load_from_checkpoint(ax2_polynomialf_standardmodel)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
+    y_pred_insample = model(x_insample.to(torch.device(model.device)))
 
 # Unnormalize predictions
 y_pred = y_pred * target_std + target_mean
+y_pred_insample = y_pred_insample * target_std + target_mean
 
 ax2.plot(x, y, label="groundtruth", color="red")
 ax2.plot(x, y_pred.cpu(), label="learned function", color="orange")
 ax2.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
 
+
+# Calculate mse loss in sample (train) and out of sample (test)
+oos_loss = nn.functional.mse_loss(y_pred.squeeze(), y)
+ins_loss = nn.functional.mse_loss(y_pred_insample.squeeze(), y_insample)
+# Append to list
+mse_losses_polynomial.append((("oos_standardmodel"), oos_loss.item()))
+mse_losses_polynomial.append((("ins_standardmodel"), ins_loss.item()))
 
 # **** Power Series Fitting ****
 # Normalize y_train_noisy before fit as was done for other models
@@ -511,19 +535,30 @@ y_train = (y_train_noisy - target_mean) / target_std
 # Fit
 p = T.fit(X_train.squeeze(), y_train.squeeze(), deg=HIDDEN_DIM)
 _, y_pred = p.linspace(200, domain=[LOW_OOS, HIGH_OOS])
+_, y_pred_insample = p.linspace(200, domain=[LOW, HIGH])
 
 # Unnormalize Prediction
 y_pred = y_pred * target_std.item() + target_mean.item()
+y_pred_insample = y_pred_insample * target_std.item() + target_mean.item()
 
 ax3.plot(x, y, label="groundtruth", color="red")
 ax3.plot(x, y_pred, label="learned function", color="orange")
 ax3.scatter(X_train, y_train_noisy, alpha=0.2, label="training set", color="tab:blue")
 
+# Calculate mse loss in sample (train) and out of sample (test)
+oos_loss = nn.functional.mse_loss(torch.from_numpy(y_pred.squeeze()).to(torch.float32), y)
+ins_loss = nn.functional.mse_loss(torch.from_numpy(y_pred_insample.squeeze()).to(torch.float32), y_insample)
+# # Append to list
+mse_losses_polynomial.append((("oos_powerseries"), oos_loss.item()))
+mse_losses_polynomial.append((("ins_powerseries"), ins_loss.item()))
 
+# %%
 # ************************************************************************************
 # Sine function
+mse_losses_sine = []
 # Groundtruth sine
 y = torch.sin(x)
+y_insample = torch.sin(x_insample)
 
 # Load necessary files
 target_mean = torch.load(f"y_train_noisy/MEAN.sinf.low{LOW}.high{HIGH}.pt")
@@ -537,14 +572,23 @@ y_train_noisy = torch.load(f"y_train_noisy/sinf.low{LOW}.high{HIGH}.pt")
 model = model.load_from_checkpoint(ax4_sinf_polymodel)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
+    y_pred_insample = model(x_insample.to(torch.device(model.device)))
 
 # Unnormalize predictions
 y_pred = y_pred * target_std + target_mean
+y_pred_insample = y_pred_insample * target_std + target_mean
 
 # Plot everything
 ax4.plot(x, y, label="groundtruth", color="red")
 ax4.plot(x, y_pred.cpu(), label="learned function", color="orange")
 ax4.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+# Calculate mse loss in sample (train) and out of sample (test)
+oos_loss = nn.functional.mse_loss(y_pred.squeeze(), y)
+ins_loss = nn.functional.mse_loss(y_pred_insample.squeeze(), y_insample)
+# Append to list
+mse_losses_sine.append((("oos_polymodel"), oos_loss.item()))
+mse_losses_sine.append((("ins_polymodel"), ins_loss.item()))
 
 
 # **** ReLUNet ****
@@ -552,13 +596,22 @@ ax4.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
 model = model.load_from_checkpoint(ax5_sinf_standardmodel)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
+    y_pred_insample = model(x_insample.to(torch.device(model.device)))
 
 # Unnormalize predictions
 y_pred = y_pred * target_std + target_mean
+y_pred_insample = y_pred_insample * target_std + target_mean
 
 ax5.plot(x, y, label="groundtruth", color="red")
 ax5.plot(x, y_pred.cpu(), label="learned function", color="orange")
 ax5.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+# Calculate mse loss in sample (train) and out of sample (test)
+oos_loss = nn.functional.mse_loss(y_pred.squeeze(), y)
+ins_loss = nn.functional.mse_loss(y_pred_insample.squeeze(), y_insample)
+# Append to list
+mse_losses_sine.append((("oos_standardmodel"), oos_loss.item()))
+mse_losses_sine.append((("ins_standardmodel"), ins_loss.item()))
 
 
 # **** Power Series Fitting ****
@@ -567,19 +620,30 @@ y_train = (y_train_noisy - target_mean) / target_std
 # Fit
 p = T.fit(X_train.squeeze(), y_train.squeeze(), deg=HIDDEN_DIM)
 _, y_pred = p.linspace(200, domain=[LOW_OOS, HIGH_OOS])
+_, y_pred_insample = p.linspace(200, domain=[LOW, HIGH])
 
 # Unnormalize prediction
 y_pred = y_pred * target_std.item() + target_mean.item()
+y_pred_insample = y_pred_insample * target_std.item() + target_mean.item()
 
 ax6.plot(x, y, label="groundtruth", color="red")
 ax6.plot(x, y_pred, label="learned function", color="orange")
 ax6.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
 
+# Calculate mse loss in sample (train) and out of sample (test)
+oos_loss = nn.functional.mse_loss(torch.from_numpy(y_pred.squeeze()).to(torch.float32), y)
+ins_loss = nn.functional.mse_loss(torch.from_numpy(y_pred_insample.squeeze()).to(torch.float32), y_insample)
+# # Append to list
+mse_losses_sine.append((("oos_powerseries"), oos_loss.item()))
+mse_losses_sine.append((("ins_powerseries"), ins_loss.item()))
+
 
 # ************************************************************************************
 # cosine function
+mse_losses_cosine = []
 # Groundtruth cosine
 y = torch.cos(x)
+y_insample = torch.cos(x_insample)
 
 # Load necessary files
 target_mean = torch.load(f"y_train_noisy/MEAN.cosinef.low{LOW}.high{HIGH}.pt")
@@ -593,14 +657,23 @@ y_train_noisy = torch.load(f"y_train_noisy/cosinef.low{LOW}.high{HIGH}.pt")
 model = model.load_from_checkpoint(ax7_cosinef_polymodel)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
+    y_pred_insample = model(x_insample.to(torch.device(model.device)))
 
 # Unnormalize predictions
 y_pred = y_pred * target_std + target_mean
+y_pred_insample = y_pred_insample * target_std + target_mean
 
 # Plot everything
 ax7.plot(x, y, label="groundtruth", color="red")
 ax7.plot(x, y_pred.cpu(), label="learned function", color="orange")
 ax7.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+# Calculate mse loss in sample (train) and out of sample (test)
+oos_loss = nn.functional.mse_loss(y_pred.squeeze(), y)
+ins_loss = nn.functional.mse_loss(y_pred_insample.squeeze(), y_insample)
+# Append to list
+mse_losses_cosine.append((("oos_polymodel"), oos_loss.item()))
+mse_losses_cosine.append((("ins_polymodel"), ins_loss.item()))
 
 
 # **** ReLUNet ****
@@ -608,13 +681,22 @@ ax7.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
 model = model.load_from_checkpoint(ax8_cosinef_standardmodel)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
+    y_pred_insample = model(x_insample.to(torch.device(model.device)))
 
 # Unnormalize predictions
 y_pred = y_pred * target_std + target_mean
+y_pred_insample = y_pred_insample * target_std + target_mean
 
 ax8.plot(x, y, label="groundtruth", color="red")
 ax8.plot(x, y_pred.cpu(), label="learned function", color="orange")
 ax8.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+# Calculate mse loss in sample (train) and out of sample (test)
+oos_loss = nn.functional.mse_loss(y_pred.squeeze(), y)
+ins_loss = nn.functional.mse_loss(y_pred_insample.squeeze(), y_insample)
+# Append to list
+mse_losses_cosine.append((("oos_standardmodel"), oos_loss.item()))
+mse_losses_cosine.append((("ins_standardmodel"), ins_loss.item()))
 
 
 # **** Power Series Fitting ****
@@ -623,19 +705,30 @@ y_train = (y_train_noisy - target_mean) / target_std
 # Fit
 p = T.fit(X_train.squeeze(), y_train.squeeze(), deg=HIDDEN_DIM)
 _, y_pred = p.linspace(200, domain=[LOW_OOS, HIGH_OOS])
+_, y_pred_insample = p.linspace(200, domain=[LOW, HIGH])
 
 # Unnormalize prediction
 y_pred = y_pred * target_std.item() + target_mean.item()
+y_pred_insample = y_pred_insample * target_std.item() + target_mean.item()
 
 ax9.plot(x, y, label="groundtruth", color="red")
 ax9.plot(x, y_pred, label="learned function", color="orange")
 ax9.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
 
+# Calculate mse loss in sample (train) and out of sample (test)
+oos_loss = nn.functional.mse_loss(torch.from_numpy(y_pred.squeeze()).to(torch.float32), y)
+ins_loss = nn.functional.mse_loss(torch.from_numpy(y_pred_insample.squeeze()).to(torch.float32), y_insample)
+# # Append to list
+mse_losses_cosine.append((("oos_powerseries"), oos_loss.item()))
+mse_losses_cosine.append((("ins_powerseries"), ins_loss.item()))
+
 
 # ***********************************************************************************
 # exp function
+mse_losses_exp = []
 # Groundtruth exp
 y = torch.exp(x - 4)
+y_insample = torch.exp(x - 4)
 
 # Load necessary files
 target_mean = torch.load(f"y_train_noisy/MEAN.expf.low{LOW}.high{HIGH}.pt")
@@ -648,28 +741,45 @@ y_train_noisy = torch.load(f"y_train_noisy/expf.low{LOW}.high{HIGH}.pt")
 model = model.load_from_checkpoint(ax10_expf_polymodel)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
+    y_pred_insample = model(x_insample.to(torch.device(model.device)))
 
 # Unnormalize predictions
 y_pred = y_pred * target_std + target_mean
+y_pred_insample = y_pred_insample * target_std + target_mean
 
 # Plot everything
 ax10.plot(x, y, label="groundtruth", color="red")
 ax10.plot(x, y_pred.cpu(), label="learned function", color="orange")
 ax10.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
 
+# Calculate mse loss in sample (train) and out of sample (test)
+oos_loss = nn.functional.mse_loss(y_pred.squeeze(), y)
+ins_loss = nn.functional.mse_loss(y_pred_insample.squeeze(), y_insample)
+# Append to list
+mse_losses_exp.append((("oos_polymodel"), oos_loss.item()))
+mse_losses_exp.append((("ins_polymodel"), ins_loss.item()))
 
 # **** ReLUNet ****
 # Load trained model
 model = model.load_from_checkpoint(ax11_expf_standardmodel)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
+    y_pred_insample = model(x_insample.to(torch.device(model.device)))  
 
 # Unnormalize predictions
 y_pred = y_pred * target_std + target_mean
+y_pred_insample = y_pred_insample * target_std + target_mean
 
 ax11.plot(x, y, label="groundtruth", color="red")
 ax11.plot(x, y_pred.cpu(), label="learned function", color="orange")
 ax11.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+# Calculate mse loss in sample (train) and out of sample (test)
+oos_loss = nn.functional.mse_loss(y_pred.squeeze(), y)
+ins_loss = nn.functional.mse_loss(y_pred_insample.squeeze(), y_insample)
+# Append to list
+mse_losses_exp.append((("oos_standardmodel"), oos_loss.item()))
+mse_losses_exp.append((("ins_standardmodel"), ins_loss.item()))
 
 
 # **** Power Series Fitting ****
@@ -678,18 +788,28 @@ y_train = (y_train_noisy - target_mean) / target_std
 # Fit
 p = T.fit(X_train.squeeze(), y_train.squeeze(), deg=HIDDEN_DIM)
 _, y_pred = p.linspace(200, domain=[LOW_OOS, HIGH_OOS])
+_, y_pred_insample = p.linspace(200, domain=[LOW, HIGH])
 
 # Unnormalize prediction
 y_pred = y_pred * target_std.item() + target_mean.item()
+y_pred_insample = y_pred_insample * target_std.item() + target_mean.item()
 
 ax12.plot(x, y, label="groundtruth", color="red")
 ax12.plot(x, y_pred, label="learned function", color="orange")
 ax12.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
 
+# Calculate mse loss in sample (train) and out of sample (test)
+oos_loss = nn.functional.mse_loss(torch.from_numpy(y_pred.squeeze()).to(torch.float32), y)
+ins_loss = nn.functional.mse_loss(torch.from_numpy(y_pred_insample.squeeze()).to(torch.float32), y_insample)
+# # Append to list
+mse_losses_exp.append((("oos_powerseries"), oos_loss.item()))
+mse_losses_exp.append((("ins_powerseries"), ins_loss.item()))
 # ***********************************************************************************
 # log function
+mse_losses_log = []
 # Groundtruth log
 y = torch.log(x)
+y_insample = torch.log(x_insample)
 
 # Load necessary files
 target_mean = torch.load(f"y_train_noisy/MEAN.logf.low{LOW}.high{HIGH}.pt")
@@ -702,14 +822,23 @@ y_train_noisy = torch.load(f"y_train_noisy/logf.low{LOW}.high{HIGH}.pt")
 model = model.load_from_checkpoint(ax13_logf_polymodel)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
+    y_pred_insample = model(x_insample.to(torch.device(model.device)))
 
 # Unnormalize predictions
 y_pred = y_pred * target_std + target_mean
+y_pred_insample = y_pred_insample * target_std + target_mean
 
 # Plot everything
 ax13.plot(x, y, label="groundtruth", color="red")
 ax13.plot(x, y_pred.cpu(), label="learned function", color="orange")
 ax13.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
+
+# Calculate mse loss in sample (train) and out of sample (test)
+oos_loss = nn.functional.mse_loss(y_pred.squeeze(), y)
+ins_loss = nn.functional.mse_loss(y_pred_insample.squeeze(), y_insample)
+# Append to list
+mse_losses_log.append((("oos_polymodel"), oos_loss.item()))
+mse_losses_log.append((("ins_polymodel"), ins_loss.item()))
 
 
 # **** ReLUNet ****
@@ -717,14 +846,22 @@ ax13.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
 model = model.load_from_checkpoint(ax14_logf_standardmodel)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
+    y_pred_insample = model(x_insample.to(torch.device(model.device)))  
 
 # Unnormalize predictions
 y_pred = y_pred * target_std + target_mean
+y_pred_insample = y_pred_insample * target_std + target_mean
 
 ax14.plot(x, y, label="groundtruth", color="red")
 ax14.plot(x, y_pred.cpu(), label="learned function", color="orange")
 ax14.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
 
+# Calculate mse loss in sample (train) and out of sample (test)
+oos_loss = nn.functional.mse_loss(y_pred.squeeze(), y)
+ins_loss = nn.functional.mse_loss(y_pred_insample.squeeze(), y_insample)
+# Append to list
+mse_losses_log.append((("oos_standardmodel"), oos_loss.item()))
+mse_losses_log.append((("ins_standardmodel"), ins_loss.item()))
 
 # **** Power Series Fitting ****
 # Normalize y_train_noisy before fit as was done for other models
@@ -732,18 +869,43 @@ y_train = (y_train_noisy - target_mean) / target_std
 # Fit
 p = T.fit(X_train.squeeze(), y_train.squeeze(), deg=HIDDEN_DIM)
 _, y_pred = p.linspace(200, domain=[LOW_OOS, HIGH_OOS])
+_, y_pred_insample = p.linspace(200, domain=[LOW, HIGH])
 
 # Unnormalize prediction
 y_pred = y_pred * target_std.item() + target_mean.item()
+y_pred_insample = y_pred_insample * target_std.item() + target_mean.item()
 
 ax15.plot(x, y, label="groundtruth", color="red")
 ax15.plot(x, y_pred, label="learned function", color="orange")
 ax15.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
 
+# Calculate mse loss in sample (train) and out of sample (test)
+oos_loss = nn.functional.mse_loss(torch.from_numpy(y_pred.squeeze()).to(torch.float32), y)
+ins_loss = nn.functional.mse_loss(torch.from_numpy(y_pred_insample.squeeze()).to(torch.float32), y_insample)
+# # Append to list
+mse_losses_log.append((("oos_powerseries"), oos_loss.item()))
+mse_losses_log.append((("ins_powerseries"), ins_loss.item()))
+
 #* *************************************************************************************
 # Make everything tight
 gs.tight_layout(fig)
 print("Done...")
+
+# %%
+print("Saving mse errors to csv")
+import csv
+total_list = [mse_losses_polynomial, mse_losses_sine, mse_losses_cosine, mse_losses_exp, mse_losses_log]
+names = ["polynomial function:", "sine function:", "cosine function:", "exp function:", "log function:"]
+with open(f'mse_losses_{HIDDEN_DIM}_noise{NOISE_LEVEL}.csv','w') as out:
+    csv_out=csv.writer(out)
+    csv_out.writerow(['domain_model','mse_loss'])
+    for i, data in enumerate(total_list):
+        csv_out.writerow([names[i]])
+        for row in data:
+            csv_out.writerow(row)
+
+print("Done.")
+
 
 print("Saving figure...")
 # Save gridplot
