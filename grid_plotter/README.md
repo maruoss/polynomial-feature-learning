@@ -1,6 +1,6 @@
 # Learning simple functions with 10 Neurons
 
-Instructions on how to reproduce the gridplot of the toy examples in our paper "Polynomial Feature Learning".
+Instructions on how to reproduce the gridplot of the simple functions in our paper "Polynomial Feature Learning".
 
 
 ## Getting started
@@ -15,15 +15,20 @@ conda env create -f environment.yml
 
 **2) Steps**
 
-Open `main.py` and follow the steps there:
+**Open `main.py` and follow the steps there:**
 
-1. To reproduce the toy plots of the paper set seed to 42.
+1. To reproduce the gridplot for the simple functions of the paper set seed to 42.
 
-2. Choose function out of [polynomialf, sinf, cosinef, expf, logf].
+2. Specify function variable out of [polynomialf, sinf, cosinef, expf, logf].
+ - **polynomialf** for the (arbitrary) polynomial function $0.2x^{3} - 1.5x^{2} + 3.6x - 2.5$
+ - **sinf** for $sin(x)$
+ - **cosinef** for $cos(x)$
+ - **expf** for $exp(x)$
+ - **logf** for $log(x)$
 
-3. Specify model class here:
- - "PolyModel" for our Polynomial NN
- - "StandardModel" for ReLU NN
+3. Specify model class variable here:
+ - **PolyModel** for our Polynomial NN
+ - **StandardModel** for ReLU NN
 
 4. Wait for training to end and use saved checkpoint "last.ckpt" later in Step 6.
 
