@@ -3,11 +3,11 @@ import matplotlib.pyplot as plt
 from matplotlib.cm import get_cmap
 import numpy as np
 
-ReluNet = [0.044848754, 0.045977909, 0.219260624]  # 0.810611179843544]
+ReluNet = [0.044848754, 0.044077049, 0.216295385]  # 0.810611179843544]
 
 LinReg = [0.0389291506260633, 0.0401787117123603, 0.214463660120964]  # 0.753881526738405]
 
-PolyNet = [0.029276212118566, 0.033235325, 0.220772358775138]  # 0.749413399]
+PolyNet = [0.028300693, 0.031916652, 0.220772359]  # 0.749413399]
 
 #tread = []
 
@@ -46,5 +46,5 @@ plt.xticks(x, xlabels, fontsize=20)
 # plt.title('', fontsize=26)
 plt.legend(fontsize=20, loc='upper left')
 # save figure?
-plt.savefig('models_barplots_v3_log.png', dpi=300)
-plt.show()
+plt.savefig('models_barplots_v4_log.png', dpi=300)
+# plt.show()
