@@ -193,35 +193,51 @@ def k_plots(k_losses, colors):
         plt.plot(avgs, color=colors[i])
     plt.show()
 
-# load data
-# housing data
-x, y = read_data('datasets/housing.data', [13])  # [13, 4] for predicting PRICE and NOX
-# forest fires data
-x_f, y_f = read_forest_data('datasets/forestfires.csv')
 
-#
-# poly_k_loss, poly_v_loss = train_and_test(X=x, y=y, nnet='poly', mon_dim=100, b1=False, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=5, printout=500)
+'''
+TASK 1: Predict House Prices
+'''
 
-# net_k_loss, net_v_loss = train_and_test(X=x, y=y, nnet='net', mon_dim=100, b1=True, b2=True, bs=8, lr=0.0005, max_epochs=10000, nsplits=10, printout=1000)
-# print(net_v_loss)
+x, y = read_data('datasets/housing.data', [13])
 
-# linreg_v_loss = train_and_test_linreg(X=x, y=y, nsplits=10)
+# linear regression
+train_and_test_linreg(X=x, y=y, nsplits=10)
 
-# poly housing
-# poly_k_loss, poly_v_loss = train_and_test(X=x, y=y, nnet='poly', mon_dim=100, b1=False, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=10, printout=1000)
+# ReluNet
+train_and_test(X=x, y=y, nnet='net', mon_dim=100, b1=True, b2=True, bs=8, lr=0.0005, max_epochs=100, nsplits=10, printout=50)
 
-# relunet housing
-relu_k_loss, relu_v_loss = train_and_test(X=x, y=y, nnet='net', mon_dim=100, b1=True, b2=True, bs=8, lr=0.0005, max_epochs=20000, nsplits=10, printout=1000)
+# PolyNet
+train_and_test(X=x, y=y, nnet='poly', mon_dim=100, b1=False, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=10, printout=1000)
 
-# linreg for housing
-# linreg_v_loss = train_and_test_linreg(X=x, y=y, nsplits=10)
 
-# linreg for forest fires
-# linreg_v_loss = train_and_test_linreg(X=x_f, y=y_f, nsplits=10)
+'''
+TASK 2: Predict House Prices and NOX gases
+'''
 
-# relunet for forest fires
-# relu_k_loss_f, relu_v_loss_f = train_and_test(X=x_f, y=y_f, nnet='net', mon_dim=100, b1=True, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=10, printout=1000)
+x, y = read_data('datasets/housing.data', [13, 4])
 
-# polynet for forest fires
-# poly_k_loss_f, poly_v_loss_f = train_and_test(X=x_f, y=y_f, nnet='poly', mon_dim=100, b1=False, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=10, printout=1000)
-# print('val losses forest fires: ', poly_v_loss_f)
+# linear regression
+train_and_test_linreg(X=x, y=y, nsplits=10)
+
+# ReluNet
+train_and_test(X=x, y=y, nnet='net', mon_dim=100, b1=True, b2=True, bs=8, lr=0.0005, max_epochs=200, nsplits=10, printout=50)
+
+# PolyNet
+train_and_test(X=x, y=y, nnet='poly', mon_dim=100, b1=False, b2=True, bs=8, lr=0.0005, max_epochs=10000, nsplits=10, printout=1000)
+
+
+'''
+TASK 3: Predict Forest Fire Burned Area
+'''
+
+x, y = read_forest_data('datasets/forestfires.csv')
+
+# linear regression
+train_and_test_linreg(X=x, y=y, nsplits=10)
+
+# ReluNet
+train_and_test(X=x, y=y, nnet='net', mon_dim=100, b1=True, b2=True, bs=8, lr=0.0005, max_epochs=100, nsplits=10, printout=50)
+
+# PolyNet
+train_and_test(X=x, y=y, nnet='poly', mon_dim=100, b1=False, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=10, printout=1000)
+
