@@ -1,4 +1,4 @@
-# Instruction on reproducing our results on synthetic data
+# Instructions on reproducing our results on synthetic data
 
 From the base directory, run the script `polynet_computations.py`
 
