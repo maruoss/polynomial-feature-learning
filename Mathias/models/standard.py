@@ -26,7 +26,7 @@ class StandardModel(pl.LightningModule):
         super().__init__()
         self.save_hyperparameters()
 
-        self.l1 = nn.Linear(input_dim, hidden_dim, bias=False)
+        self.l1 = nn.Linear(input_dim, hidden_dim, bias=True)
         self.l2 = nn.Linear(hidden_dim, 1, bias=True)
 
     def get_l1weights(self):

@@ -144,10 +144,11 @@ trainer.fit(model, dm)
 # print(model.hparams.learning_rate)
 
 
-# %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PREDICTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-trainer.test(
-    model, dm
-)
+
+# # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% PREDICTIONS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# trainer.test(
+#     model, dm
+# )
 
 # %%
 # Show model predictions and save plot (creates 3 plots next to each other with different zoom levels)
