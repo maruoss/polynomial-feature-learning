@@ -31,9 +31,10 @@ class Relu_Net(nn.Module):
         self.lin_hidden = nn.Linear(input_dim, mon_dim, bias=b1)
         # self.lin_hidden.weight.data.uniform_(0.0, 1.0)
         # output lin layer, trained weights=a_m
+        self.dropout = nn.Dropout(0.8)
         self.lin_output = nn.Linear(mon_dim, out_dim, bias=b2)
         # alternative weights: -1, 1
         # self.lin_output.weight.data.uniform_(0.0, 1.0)
 
     def forward(self, x):
-        return self.lin_output(F.relu(self.lin_hidden(x)))
+        return self.lin_output(self.dropout(F.relu(self.lin_hidden(x))))

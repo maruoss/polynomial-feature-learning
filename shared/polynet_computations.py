@@ -210,7 +210,7 @@ x_f, y_f = read_forest_data('datasets/forestfires.csv')
 # poly_k_loss, poly_v_loss = train_and_test(X=x, y=y, nnet='poly', mon_dim=100, b1=False, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=10, printout=1000)
 
 # relunet housing
-# relu_k_loss, relu_v_loss = train_and_test(X=x, y=y, nnet='net', mon_dim=100, b1=True, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=10, printout=1000)
+relu_k_loss, relu_v_loss = train_and_test(X=x, y=y, nnet='net', mon_dim=100, b1=True, b2=True, bs=8, lr=0.0005, max_epochs=20000, nsplits=10, printout=1000)
 
 # linreg for housing
 # linreg_v_loss = train_and_test_linreg(X=x, y=y, nsplits=10)
@@ -222,5 +222,5 @@ x_f, y_f = read_forest_data('datasets/forestfires.csv')
 # relu_k_loss_f, relu_v_loss_f = train_and_test(X=x_f, y=y_f, nnet='net', mon_dim=100, b1=True, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=10, printout=1000)
 
 # polynet for forest fires
-poly_k_loss_f, poly_v_loss_f = train_and_test(X=x_f, y=y_f, nnet='poly', mon_dim=100, b1=False, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=10, printout=1000)
+# poly_k_loss_f, poly_v_loss_f = train_and_test(X=x_f, y=y_f, nnet='poly', mon_dim=100, b1=False, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=10, printout=1000)
 # print('val losses forest fires: ', poly_v_loss_f)
