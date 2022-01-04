@@ -164,107 +164,107 @@ plt.show()
 #
 # Plot 3 Power Series plots each zoomed differently ***************************************************
 
-# get X_train domain
-X_train = dm.X_train
-y_train = dm.y_train
-# Fit polynomial
-p = T.fit(X_train.squeeze(), y_train.squeeze(), deg=HIDDEN_DIM)
-_, y_pred = p.linspace(200, domain=[LOW_OOS, HIGH_OOS])
+# # get X_train domain
+# X_train = dm.X_train
+# y_train = dm.y_train
+# # Fit polynomial
+# p = T.fit(X_train.squeeze(), y_train.squeeze(), deg=HIDDEN_DIM)
+# _, y_pred = p.linspace(200, domain=[LOW_OOS, HIGH_OOS])
 
-# Unnormalize
-y_pred = y_pred * dm.target_std.item() + dm.target_mean.item()
+# # Unnormalize
+# y_pred = y_pred * dm.target_std.item() + dm.target_mean.item()
 
-# get extended domain
-x = torch.linspace(LOW_OOS, HIGH_OOS, 200)
-y = TARGET_FN(x)
+# # get extended domain
+# x = torch.linspace(LOW_OOS, HIGH_OOS, 200)
+# y = TARGET_FN(x)
 
-fig, ax = plt.subplots(1, 3, figsize = (21, 5))
+# fig, ax = plt.subplots(1, 3, figsize = (21, 5))
 
-if TARGET_FN.__name__ == "polynomialf":
-    function_name = "Polynomial Function"
-elif TARGET_FN.__name__ == "sinf":
-    function_name = "sin(x)"
-elif TARGET_FN.__name__ == "cosinef":
-    function_name = "cos(x)"
-elif TARGET_FN.__name__ == "expf":
-    function_name = "exp(x)"
-elif TARGET_FN.__name__ == "logf":
-    function_name = "log(x)"
+# if TARGET_FN.__name__ == "polynomialf":
+#     function_name = "Polynomial Function"
+# elif TARGET_FN.__name__ == "sinf":
+#     function_name = "sin(x)"
+# elif TARGET_FN.__name__ == "cosinef":
+#     function_name = "cos(x)"
+# elif TARGET_FN.__name__ == "expf":
+#     function_name = "exp(x)"
+# elif TARGET_FN.__name__ == "logf":
+#     function_name = "log(x)"
 
 
-ax[0].set_title(f"{function_name} fitted with Polynomials up to degree {HIDDEN_DIM}")
+# ax[0].set_title(f"{function_name} fitted with Polynomials up to degree {HIDDEN_DIM}")
 
-ax[0].plot(x, y, label="groundtruth", color="red")
-ax[0].plot(x, y_pred, label="learned function", color="orange")
-ax[0].scatter(X_train, dm.y_train_noisy, alpha=0.2, label="training set")
+# ax[0].plot(x, y, label="groundtruth", color="red")
+# ax[0].plot(x, y_pred, label="learned function", color="orange")
+# ax[0].scatter(X_train, dm.y_train_noisy, alpha=0.2, label="training set")
 
-# ax[0].set_ylim([2*y.min().item(), 2*y.max().item()])
-if  TARGET_FN.__name__ in ["sinf", "cosinef", "logf"]:
-    ax[0].set_ylim(-4, 4) #fixed scale of plot
-else:
-    ax[0].set_ylim(-5, 55)
-ax[0].set_xlabel("x")
-ax[0].set_ylabel("y")
-ax[0].legend()
+# # ax[0].set_ylim([2*y.min().item(), 2*y.max().item()])
+# if  TARGET_FN.__name__ in ["sinf", "cosinef", "logf"]:
+#     ax[0].set_ylim(-4, 4) #fixed scale of plot
+# else:
+#     ax[0].set_ylim(-5, 55)
+# ax[0].set_xlabel("x")
+# ax[0].set_ylabel("y")
+# ax[0].legend()
 
-# Subplot 2   
-_, y_pred = p.linspace(200, domain=[0.01, 7.])
+# # Subplot 2   
+# _, y_pred = p.linspace(200, domain=[0.01, 7.])
 
-# Unnormalize
-y_pred = y_pred * dm.target_std.item() + dm.target_mean.item()
+# # Unnormalize
+# y_pred = y_pred * dm.target_std.item() + dm.target_mean.item()
 
-# Create groundtruth over training domain
-x = torch.linspace(0.01, 7., 200)
-# Create groundtruth
-y = TARGET_FN(x)
+# # Create groundtruth over training domain
+# x = torch.linspace(0.01, 7., 200)
+# # Create groundtruth
+# y = TARGET_FN(x)
 
-ax[1].set_title(f"{function_name} fitted with Polynomials up to degree {HIDDEN_DIM}")
+# ax[1].set_title(f"{function_name} fitted with Polynomials up to degree {HIDDEN_DIM}")
 
-ax[1].plot(x, y, label="groundtruth", color="red")
-ax[1].plot(x, y_pred, label="learned function", color="orange")
-ax[1].scatter(X_train, dm.y_train_noisy, alpha=0.2, label="training set")
+# ax[1].plot(x, y, label="groundtruth", color="red")
+# ax[1].plot(x, y_pred, label="learned function", color="orange")
+# ax[1].scatter(X_train, dm.y_train_noisy, alpha=0.2, label="training set")
 
-# ax[0].set_ylim([2*y.min().item(), 2*y.max().item()])
-if  TARGET_FN.__name__ in ["sinf", "cosinef", "logf"]:
-    ax[1].set_ylim(-4, 4) #fixed scale of plot
-else:
-    ax[1].set_ylim(-5, 15)
-ax[1].set_xlabel("x")
-ax[1].set_ylabel("y")
-ax[1].legend()
+# # ax[0].set_ylim([2*y.min().item(), 2*y.max().item()])
+# if  TARGET_FN.__name__ in ["sinf", "cosinef", "logf"]:
+#     ax[1].set_ylim(-4, 4) #fixed scale of plot
+# else:
+#     ax[1].set_ylim(-5, 15)
+# ax[1].set_xlabel("x")
+# ax[1].set_ylabel("y")
+# ax[1].legend()
 
-# Subplot 3
-_, y_pred = p.linspace(200, domain=[X_train.min(), X_train.max()])
+# # Subplot 3
+# _, y_pred = p.linspace(200, domain=[X_train.min(), X_train.max()])
 
-# Unnormalize
-y_pred = y_pred * dm.target_std.item() + dm.target_mean.item()
+# # Unnormalize
+# y_pred = y_pred * dm.target_std.item() + dm.target_mean.item()
 
-# Create groundtruth over training domain
-x = torch.linspace(X_train.min(), X_train.max(), 200)
-# Groundtruth
-y = TARGET_FN(x)
+# # Create groundtruth over training domain
+# x = torch.linspace(X_train.min(), X_train.max(), 200)
+# # Groundtruth
+# y = TARGET_FN(x)
 
-ax[2].set_title(f"{function_name} fitted with Polynomials up to degree {HIDDEN_DIM}")
+# ax[2].set_title(f"{function_name} fitted with Polynomials up to degree {HIDDEN_DIM}")
 
-ax[2].plot(x, y, label="groundtruth", color="red")
-ax[2].plot(x, y_pred, label="learned function", color="orange")
-ax[2].scatter(X_train, dm.y_train_noisy, alpha=0.2, label="training set")
+# ax[2].plot(x, y, label="groundtruth", color="red")
+# ax[2].plot(x, y_pred, label="learned function", color="orange")
+# ax[2].scatter(X_train, dm.y_train_noisy, alpha=0.2, label="training set")
 
-# ax[1].set_ylim([y.min().item(), y.max().item()])
-if  TARGET_FN.__name__ in ["sinf", "cosinef"]:
-    ax[2].set_ylim(-1.5, 1.5) #fixed scale of plot
-elif TARGET_FN.__name__ in ["expf"]:
-    ax[2].set_ylim([y.min().item() - 0.2, y.max().item()])
-elif TARGET_FN.__name__ in ["logf"]:
-    ax[2].set_ylim([y.min().item(), y.max().item() + 0.1])
-else:
-    ax[2].set_ylim([y.min().item(), y.max().item()])
+# # ax[1].set_ylim([y.min().item(), y.max().item()])
+# if  TARGET_FN.__name__ in ["sinf", "cosinef"]:
+#     ax[2].set_ylim(-1.5, 1.5) #fixed scale of plot
+# elif TARGET_FN.__name__ in ["expf"]:
+#     ax[2].set_ylim([y.min().item() - 0.2, y.max().item()])
+# elif TARGET_FN.__name__ in ["logf"]:
+#     ax[2].set_ylim([y.min().item(), y.max().item() + 0.1])
+# else:
+#     ax[2].set_ylim([y.min().item(), y.max().item()])
 
-ax[2].set_xlabel("x")
-ax[2].set_ylabel("y")
-ax[2].legend()
+# ax[2].set_xlabel("x")
+# ax[2].set_ylabel("y")
+# ax[2].legend()
 
-plt.tight_layout()
-path = os.path.join(logger.log_dir, "polynomial_fit.png")
-plt.savefig(path, facecolor="white")
-plt.show()
+# plt.tight_layout()
+# path = os.path.join(logger.log_dir, "polynomial_fit.png")
+# plt.savefig(path, facecolor="white")
+# plt.show()
