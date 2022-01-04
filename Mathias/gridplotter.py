@@ -82,7 +82,7 @@ ax3.set_title(f"Power Series up to degree {HIDDEN_DIM}")
 ax1.set(ylabel="polynomial")
 ax4.set(ylabel="sin(x)")
 ax7.set(ylabel="cos(x)")
-ax10.set(ylabel="exp(x-4)")
+ax10.set(ylabel="exp(x-3)")
 ax13.set(ylabel="log(x)")
 
 # ax[0].tick_params(axis='y', rotation=90)
