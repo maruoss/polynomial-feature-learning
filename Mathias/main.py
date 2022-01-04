@@ -174,6 +174,7 @@ DIM = 1
 LOW = 1. #=MEAN for normal_args
 HIGH = 5. #=SD for normal_args
 SAMPLE_FN = uniform_args
+NOISE_LEVEL = 0.3
 
 # Function to learn ("constantf", "linearf")
 TARGET_FN = polynomialf
@@ -208,6 +209,7 @@ dm = MyDataModule(
     low=LOW,    #keyword for sample_fn
     high=HIGH,  #keyword for sample_fn
     target_fn=TARGET_FN,
+    noise_level=NOISE_LEVEL,
 )
 # Choose: PolyModel, StandardModel or LinearModel
 model = PolyModel(

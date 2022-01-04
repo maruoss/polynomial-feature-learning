@@ -14,6 +14,7 @@ class MyDataModule(pl.LightningDataModule):
                 low: float,
                 high: float, 
                 target_fn,
+                noise_level:float,
                 ):
         """
         Args:
@@ -80,6 +81,6 @@ class MyDataModule(pl.LightningDataModule):
         return (y - mean)/std
 
     def add_noise(self, y):
-        sd = 0.1 * torch.std(y)
+        sd = self.hparams.noise_level * torch.std(y)
         y += torch.normal(0, sd, (len(y), 1))
         return y
