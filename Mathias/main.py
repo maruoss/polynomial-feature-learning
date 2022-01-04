@@ -396,8 +396,7 @@ plt.show()
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # GRIDPLOTTING
 
-# %%
-
+print("Read in paths...")
 # Specify your absolute Model Paths here
 ax1_polynomialf_polymodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
 ax2_polynomialf_standardmodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
@@ -414,8 +413,10 @@ ax11_expf_standardmodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feat
 ax13_logf_polymodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
 ax14_logf_standardmodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
 
+print("Done...")
 
 # %%
+print("Creating grid...")
 # Domain that models were trained on
 LOW = 1.
 HIGH = 5.
@@ -739,11 +740,15 @@ ax15.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
 #* *************************************************************************************
 # Make everything tight
 gs.tight_layout(fig)
+print("Done...")
 
+print("Saving figure...")
 # Save gridplot
-fig.savefig("gridplot", facecolor="white")
+fig.savefig(f"gridplot_{HIDDEN_DIM}Monomials", facecolor="white")
 plt.show()
 
+print("Done...")
+print("Success!")
 
 
 
