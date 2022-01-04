@@ -1,0 +1,16 @@
+name: pfl
+channels:
+  - defaults
+  - pytorch
+dependencies:
+  - pandas
+  - numpy
+  - python=3.8.5
+  - pytorch
+  - torchaudio
+  - torchvision
+  - cudatoolkit=11.3
+  - matplotlib
+  - jupyterlab
+  - scikit-learn
+  - pytorch-lightning
