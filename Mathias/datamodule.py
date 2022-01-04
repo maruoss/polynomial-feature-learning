@@ -1,6 +1,5 @@
 import numpy as np
 import torch
-from sklearn.model_selection import train_test_split
 from torch.utils.data import TensorDataset, DataLoader
 import pytorch_lightning as pl
 

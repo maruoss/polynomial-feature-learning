@@ -1,9 +1,7 @@
 import torch
-from pytorch_lightning import seed_everything
 from torch import nn
 import matplotlib
 import matplotlib.pyplot as plt
-from numpy.random import default_rng
 from numpy.polynomial import Polynomial as T
 import os
 from pathlib import Path
@@ -12,9 +10,6 @@ from pathlib import Path
 from models.poly import PolyModel
 from models.standard import StandardModel
 from functions import polynomialf, sinf, cosinef, expf, logf, uniform_args
-
-# sets seeds for numpy, torch, python.random and PYTHONHASHSEED.
-seed_everything(42, workers=True)
 
 
 # Get or set project folder
