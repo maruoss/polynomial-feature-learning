@@ -1,43 +1,55 @@
+# %%
 import torch
 from pytorch_lightning import seed_everything
 from torch import nn
+import matplotlib
 import matplotlib.pyplot as plt
 from numpy.random import default_rng
 from numpy.polynomial import Polynomial as T
+import os
+from pathlib import Path
 
 # files
 from models.poly import PolyModel
 from models.standard import StandardModel
 from functions import polynomialf, sinf, cosinef, expf, logf, uniform_args
 
-# %%
 # sets seeds for numpy, torch, python.random and PYTHONHASHSEED.
 seed_everything(42, workers=True)
 
-# Ignore warning in training when num_workers=0 (possible bottleneck)
-import warnings
-warnings.filterwarnings("ignore", ".*Consider increasing the value of the `num_workers` argument*")
-warnings.filterwarnings("ignore", category=DeprecationWarning) 
+# %%
+# Get or set project folder
+# project_path = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias"
+project_path = os.getcwd()
+# Convert into os indep. path
+project_path = Path(project_path)
 
 
-print("Read in paths...")
-# Specify your absolute Model Paths here
-ax1_polynomialf_polymodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
-ax2_polynomialf_standardmodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.StandardModel.polynomialf.uniform_args.lrate-0.0001.noise0.1.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+# # Unit Test
+# # Dont use slashes at the start! On Windows: subpath with r"", on Linux subpath with forward slashes ".../file.ckpt"
+# to_load = r"logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-1e-05.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+# libdir = Path.joinpath(project_path, to_load)
+# model = PolyModel.load_from_checkpoint(libdir)
+# model
 
-ax4_sinf_polymodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
-ax5_sinf_standardmodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.StandardModel.polynomialf.uniform_args.lrate-0.0001.noise0.1.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+#%%
+# Specify ckpt paths here:
+ax1_polynomialf_polymodel = r"logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-1e-05.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+ax2_polynomialf_standardmodel = r"logs\DEBUGGING.StandardModel.polynomialf.uniform_args.lrate-0.0001.noise0.1.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
 
-ax7_cosinef_polymodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
-ax8_cosinef_standardmodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.StandardModel.polynomialf.uniform_args.lrate-0.0001.noise0.1.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+ax4_sinf_polymodel = r"logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-1e-05.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+ax5_sinf_standardmodel = r"logs\DEBUGGING.StandardModel.polynomialf.uniform_args.lrate-0.0001.noise0.1.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
 
-ax10_expf_polymodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
-ax11_expf_standardmodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.StandardModel.polynomialf.uniform_args.lrate-0.0001.noise0.1.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+ax7_cosinef_polymodel = r"logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-1e-05.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+ax8_cosinef_standardmodel = r"logs\DEBUGGING.StandardModel.polynomialf.uniform_args.lrate-0.0001.noise0.1.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
 
-ax13_logf_polymodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-0.0001.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
-ax14_logf_standardmodel = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias\logs\DEBUGGING.StandardModel.polynomialf.uniform_args.lrate-0.0001.noise0.1.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+ax10_expf_polymodel = r"logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-1e-05.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+ax11_expf_standardmodel = r"logs\DEBUGGING.StandardModel.polynomialf.uniform_args.lrate-0.0001.noise0.1.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
 
-print("Done...")
+ax13_logf_polymodel = r"logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-1e-05.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+ax14_logf_standardmodel = r"logs\DEBUGGING.StandardModel.polynomialf.uniform_args.lrate-0.0001.noise0.1.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+
+print("Read in paths successfully!")
 
 # %%
 print("Creating grid...")
@@ -57,6 +69,9 @@ NOISE_LEVEL = 0.1
 x_insample = torch.linspace(LOW, HIGH, 200)
 x = torch.linspace(LOW_OOS, HIGH_OOS, 200)
 
+# Set fontsize
+matplotlib.rcParams.update({'font.size': 16})
+# Create grid
 fig = plt.figure(figsize=(15, 15))
 gs = fig.add_gridspec(5, 3, hspace=0, wspace=0)
 (ax1, ax2, ax3), (ax4, ax5, ax6), (ax7, ax8, ax9), (ax10, ax11, ax12), (ax13, ax14, ax15) = gs.subplots(sharex='col', sharey='row')
@@ -105,7 +120,8 @@ y_train_noisy = torch.load(f"y_train_noisy/polynomialf.low{LOW}.high{HIGH}.pt")
 # ***** PolyNet *****
 # Load trained model
 # path1 = path.joinpath(relpath_polynomialf_polymodel)
-model = PolyModel.load_from_checkpoint(ax1_polynomialf_polymodel)
+to_load = Path.joinpath(project_path, ax1_polynomialf_polymodel)
+model = PolyModel.load_from_checkpoint(to_load)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
     y_pred_insample = model(x_insample.to(torch.device(model.device)))
@@ -119,7 +135,6 @@ ax1.plot(x, y, label="groundtruth", color="red")
 ax1.plot(x, y_pred.cpu(), label="learned function", color="orange")
 ax1.scatter(X_train, y_train_noisy, alpha=0.2, label="training set")
 
-# %%
 # Calculate mse loss in sample (train) and out of sample (test)
 oos_loss = nn.functional.mse_loss(y_pred.squeeze(), y)
 ins_loss = nn.functional.mse_loss(y_pred_insample.squeeze(), y_insample)
@@ -128,11 +143,10 @@ mse_losses_polynomial.append((("oos_polymodel"), oos_loss.item()))
 mse_losses_polynomial.append((("ins_polymodel"), ins_loss.item()))
 
 
-#%%
-
 # **** ReLUNet ****
 # Load trained model
-model = StandardModel.load_from_checkpoint(ax2_polynomialf_standardmodel)
+to_load = Path.joinpath(project_path, ax2_polynomialf_standardmodel)
+model = StandardModel.load_from_checkpoint(to_load)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
     y_pred_insample = model(x_insample.to(torch.device(model.device)))
@@ -192,7 +206,8 @@ y_train_noisy = torch.load(f"y_train_noisy/sinf.low{LOW}.high{HIGH}.pt")
 
 # ***** PolyNet *****
 # Load trained model
-model = PolyModel.load_from_checkpoint(ax4_sinf_polymodel)
+to_load = Path.joinpath(project_path, ax4_sinf_polymodel)
+model = PolyModel.load_from_checkpoint(to_load)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
     y_pred_insample = model(x_insample.to(torch.device(model.device)))
@@ -216,7 +231,8 @@ mse_losses_sine.append((("ins_polymodel"), ins_loss.item()))
 
 # **** ReLUNet ****
 # Load trained model
-model = StandardModel.load_from_checkpoint(ax5_sinf_standardmodel)
+to_load = Path.joinpath(project_path, ax5_sinf_standardmodel)
+model = StandardModel.load_from_checkpoint(to_load)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
     y_pred_insample = model(x_insample.to(torch.device(model.device)))
@@ -277,7 +293,8 @@ y_train_noisy = torch.load(f"y_train_noisy/cosinef.low{LOW}.high{HIGH}.pt")
 
 # ***** PolyNet *****
 # Load trained model
-model = PolyModel.load_from_checkpoint(ax7_cosinef_polymodel)
+to_load = Path.joinpath(project_path, ax7_cosinef_polymodel)
+model = PolyModel.load_from_checkpoint(to_load)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
     y_pred_insample = model(x_insample.to(torch.device(model.device)))
@@ -301,7 +318,8 @@ mse_losses_cosine.append((("ins_polymodel"), ins_loss.item()))
 
 # **** ReLUNet ****
 # Load trained model
-model = StandardModel.load_from_checkpoint(ax8_cosinef_standardmodel)
+to_load = Path.joinpath(project_path, ax8_cosinef_standardmodel)
+model = StandardModel.load_from_checkpoint(to_load)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
     y_pred_insample = model(x_insample.to(torch.device(model.device)))
@@ -361,7 +379,8 @@ y_train_noisy = torch.load(f"y_train_noisy/expf.low{LOW}.high{HIGH}.pt")
 
 # ***** PolyNet *****
 # Load trained model
-model = PolyModel.load_from_checkpoint(ax10_expf_polymodel)
+to_load = Path.joinpath(project_path, ax10_expf_polymodel)
+model = PolyModel.load_from_checkpoint(to_load)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
     y_pred_insample = model(x_insample.to(torch.device(model.device)))
@@ -384,7 +403,8 @@ mse_losses_exp.append((("ins_polymodel"), ins_loss.item()))
 
 # **** ReLUNet ****
 # Load trained model
-model = StandardModel.load_from_checkpoint(ax11_expf_standardmodel)
+to_load = Path.joinpath(project_path, ax11_expf_standardmodel)
+model = StandardModel.load_from_checkpoint(to_load)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
     y_pred_insample = model(x_insample.to(torch.device(model.device)))  
@@ -442,7 +462,8 @@ y_train_noisy = torch.load(f"y_train_noisy/logf.low{LOW}.high{HIGH}.pt")
 
 # ***** PolyNet *****
 # Load trained model
-model = PolyModel.load_from_checkpoint(ax13_logf_polymodel)
+to_load = Path.joinpath(project_path, ax13_logf_polymodel)
+model = PolyModel.load_from_checkpoint(to_load)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
     y_pred_insample = model(x_insample.to(torch.device(model.device)))
@@ -466,7 +487,8 @@ mse_losses_log.append((("ins_polymodel"), ins_loss.item()))
 
 # **** ReLUNet ****
 # Load trained model
-model = StandardModel.load_from_checkpoint(ax14_logf_standardmodel)
+to_load = Path.joinpath(project_path, ax14_logf_standardmodel)
+model = StandardModel.load_from_checkpoint(to_load)
 with torch.no_grad():
     y_pred = model(x.to(torch.device(model.device)))
     y_pred_insample = model(x_insample.to(torch.device(model.device)))  
