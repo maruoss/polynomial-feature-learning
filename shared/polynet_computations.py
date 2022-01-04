@@ -23,6 +23,12 @@ print('cuda available: ', torch.cuda.is_available())
 # device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 device = "cpu"
 
+# random seed/state
+rs = 42
+
+torch.manual_seed(rs)
+np.random.seed(rs)
+
 
 def read_data(path, y_list, s="\s+"):
     x = pd.read_csv(path, sep=s, header=None)
@@ -36,6 +42,27 @@ def read_data(path, y_list, s="\s+"):
         x = np.delete(x, i, 1)
     y = np.transpose(y)
     return x, y
+
+
+def read_forest_data(path):
+    month_list = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+    day_list = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat', 'sun']
+    forest_data = pd.read_csv(path, header=0)
+    # x = pd.DataFrame(x)
+    fd = forest_data.drop(['month', 'day', 'area'], axis=1)
+    forest_months = forest_data['month'].to_list()
+    forest_days = forest_data['day'].to_list()
+    y = np.transpose([forest_data['area'].to_list()])
+    fd = fd.to_numpy()
+    f_data = [[0 for _ in range(len(month_list)+len(day_list))] for _ in range(len(forest_months))]
+    for i, m in enumerate(forest_months):
+        d = forest_days[i]
+        month_ind = month_list.index(m)
+        day_ind = day_list.index(d)+12
+        f_data[i][month_ind] = 1
+        f_data[i][day_ind] = 1
+    x = np.concatenate((fd, f_data), axis=1)
+    return np.nan_to_num(x.astype(float)), np.nan_to_num(y.astype(float))
 
 
 def prep_data(x_train, x_test, y_train, y_test):
@@ -62,18 +89,17 @@ def prep_data(x_train, x_test, y_train, y_test):
     scaler.fit(y_train)
     y_train = scaler.transform(y_train)
     y_test = scaler.transform(y_test)
-    return torch.FloatTensor(x_train).to(device), torch.FloatTensor(x_test).to(device), torch.FloatTensor(y_train).to(
-        device), torch.FloatTensor(y_test).to(device)
+    return torch.FloatTensor(np.nan_to_num(x_train, nan=1.0)).to(device),\
+           torch.FloatTensor(np.nan_to_num(x_test, nan=1.0)).to(device),\
+           torch.FloatTensor(np.nan_to_num(y_train, nan=1.0)).to(device),\
+           torch.FloatTensor(np.nan_to_num(y_test, nan=1.0)).to(device)
 
 
-x, y = read_data('datasets/housing.data', [13, 4])  # [13] for only predicting PRICE and not NOX
-
-
-def train_and_test(X, y, nnet, mon_dim, b1, b2, bs, lr, max_epochs=1000, nsplits=5, printout=100, show_pred=False):
+def train_and_test(X, y, nnet, mon_dim, b1, b2, bs, lr, max_epochs=1000, nsplits=5, printout=100):
     # X, y = make_data(n, f_num)
     strt=time.time()
     input_dim = X.shape[1]
-    kf = KFold(n_splits=nsplits, shuffle=True)
+    kf = KFold(n_splits=nsplits, shuffle=True, random_state=rs)
     # loss list for every k fold
     k_loss = [[] for _ in range(nsplits)]
     val_loss = []
@@ -130,7 +156,7 @@ def train_and_test(X, y, nnet, mon_dim, b1, b2, bs, lr, max_epochs=1000, nsplits
 
 def train_and_test_linreg(X, y, nsplits=5):
     input_dim = X.shape[1]
-    kf = KFold(n_splits=nsplits, shuffle=True)
+    kf = KFold(n_splits=nsplits, shuffle=True, random_state=rs)
     # loss list for every k fold
     val_loss = []
     for j, indices in enumerate(kf.split(X)):
@@ -164,10 +190,37 @@ def k_plots(k_losses, colors):
         plt.plot(avgs, color=colors[i])
     plt.show()
 
-poly_k_loss, poly_v_loss = train_and_test(X=x, y=y, nnet='poly', mon_dim=100, b1=False, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=5, printout=500)
+# load data
+# housing data
+x, y = read_data('datasets/housing.data', [13])  # [13, 4] for predicting PRICE and NOX
+# forest fires data
+x_f, y_f = read_forest_data('datasets/forestfires.csv')
 
-net_k_loss, net_v_loss = train_and_test(X=x, y=y, nnet='net', mon_dim=100, b1=True, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=5, printout=500)
 
-linreg_v_loss = train_and_test_linreg(X=x, y=y, nsplits=5)
+# poly_k_loss, poly_v_loss = train_and_test(X=x, y=y, nnet='poly', mon_dim=100, b1=False, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=5, printout=500)
 
-k_plots([poly_k_loss], ['blue'])
+# net_k_loss, net_v_loss = train_and_test(X=x, y=y, nnet='net', mon_dim=100, b1=True, b2=True, bs=8, lr=0.0005, max_epochs=10000, nsplits=10, printout=1000)
+# print(net_v_loss)
+
+# linreg_v_loss = train_and_test_linreg(X=x, y=y, nsplits=10)
+
+# k_plots([poly_k_loss], ['blue'])
+
+# poly housing
+# poly_k_loss, poly_v_loss = train_and_test(X=x, y=y, nnet='poly', mon_dim=100, b1=False, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=10, printout=1000)
+
+# relunet housing
+# relu_k_loss, relu_v_loss = train_and_test(X=x, y=y, nnet='net', mon_dim=100, b1=True, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=10, printout=1000)
+
+# linreg for housing
+# linreg_v_loss = train_and_test_linreg(X=x, y=y, nsplits=10)
+
+# linreg for forest fires
+# linreg_v_loss = train_and_test_linreg(X=x_f, y=y_f, nsplits=10)
+
+# relunet for forest fires
+# relu_k_loss_f, relu_v_loss_f = train_and_test(X=x_f, y=y_f, nnet='net', mon_dim=100, b1=True, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=10, printout=1000)
+
+# polynet for forest fires
+poly_k_loss_f, poly_v_loss_f = train_and_test(X=x_f, y=y_f, nnet='poly', mon_dim=100, b1=False, b2=True, bs=8, lr=0.0005, max_epochs=5000, nsplits=10, printout=1000)
+# print('val losses forest fires: ', poly_v_loss_f)

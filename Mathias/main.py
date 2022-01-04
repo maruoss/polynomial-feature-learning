@@ -100,7 +100,7 @@ def expf(x: torch.Tensor) -> torch.Tensor:
     Takes array x of shape [obs, dim] as input and outputs y
     in shape [obs, 1].
     """
-    y = torch.exp(x - 4) #shift exponent function to the right
+    y = torch.exp(x - 3) #shift exponent function to the right
     if hasattr(y, "shape"):
         if len(y.shape) == 1:
             y = y.view(-1, 1)
