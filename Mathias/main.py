@@ -174,6 +174,7 @@ DIM = 1
 LOW = 1. #=MEAN for normal_args
 HIGH = 5. #=SD for normal_args
 SAMPLE_FN = uniform_args
+NOISE_LEVEL = 0.3
 
 # Function to learn ("constantf", "linearf")
 TARGET_FN = polynomialf
@@ -208,6 +209,7 @@ dm = MyDataModule(
     low=LOW,    #keyword for sample_fn
     high=HIGH,  #keyword for sample_fn
     target_fn=TARGET_FN,
+    noise_level=NOISE_LEVEL,
 )
 # Choose: PolyModel, StandardModel or LinearModel
 model = PolyModel(
@@ -224,7 +226,7 @@ model = PolyModel(
 
 logger = pl.loggers.TensorBoardLogger(
     'logs', 
-    name=f'{CUSTOMNOTE}.{model.__class__.__name__}.{TARGET_FN.__name__}.{SAMPLE_FN.__name__}.lrate-{LEARNING_RATE}.low-{LOW}.high-{HIGH}.'\
+    name=f'{CUSTOMNOTE}.{model.__class__.__name__}.{TARGET_FN.__name__}.{SAMPLE_FN.__name__}.lrate-{LEARNING_RATE}.noise{NOISE_LEVEL}.low-{LOW}.high-{HIGH}.'\
     f'nobs-{NUM_OBS}.dim-{DIM}.#monomials-{HIDDEN_DIM}.batchsize-{BATCH_SIZE}',
     default_hp_metric=False,
 
