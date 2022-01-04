@@ -1,4 +1,3 @@
-# %%
 import torch
 from pytorch_lightning import seed_everything
 from torch import nn
@@ -17,43 +16,33 @@ from functions import polynomialf, sinf, cosinef, expf, logf, uniform_args
 # sets seeds for numpy, torch, python.random and PYTHONHASHSEED.
 seed_everything(42, workers=True)
 
-# %%
+
 # Get or set project folder
 # project_path = r"C:\Users\Mathiass\Documents\Projects\polynomial-feature-learning\Mathias"
 project_path = os.getcwd()
 # Convert into os indep. path
 project_path = Path(project_path)
 
+# Specify relative ckpt paths here:
+ax1_polynomialf_polymodel = "model_checkpoints/poly-polymodel.ckpt"
+ax2_polynomialf_standardmodel = "model_checkpoints/poly-standardmodel.ckpt"
 
-# # Unit Test
-# # Dont use slashes at the start! On Windows: subpath with r"", on Linux subpath with forward slashes ".../file.ckpt"
-# to_load = r"logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-1e-05.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
-# libdir = Path.joinpath(project_path, to_load)
-# model = PolyModel.load_from_checkpoint(libdir)
-# model
+ax4_sinf_polymodel = "model_checkpoints/sine-polymodel.ckpt"
+ax5_sinf_standardmodel = "model_checkpoints/sine-standardmodel.ckpt"
 
-#%%
-# Specify ckpt paths here:
-ax1_polynomialf_polymodel = r"logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-1e-05.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
-ax2_polynomialf_standardmodel = r"logs\DEBUGGING.StandardModel.polynomialf.uniform_args.lrate-0.0001.noise0.1.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+ax7_cosinef_polymodel = "model_checkpoints/cosine-polymodel.ckpt"
+ax8_cosinef_standardmodel = "model_checkpoints/cosine-standardmodel.ckpt"
 
-ax4_sinf_polymodel = r"logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-1e-05.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
-ax5_sinf_standardmodel = r"logs\DEBUGGING.StandardModel.polynomialf.uniform_args.lrate-0.0001.noise0.1.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+ax10_expf_polymodel = "model_checkpoints/exp-polymodel.ckpt"
+ax11_expf_standardmodel = "model_checkpoints/exp-standardmodel.ckpt"
 
-ax7_cosinef_polymodel = r"logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-1e-05.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
-ax8_cosinef_standardmodel = r"logs\DEBUGGING.StandardModel.polynomialf.uniform_args.lrate-0.0001.noise0.1.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
-
-ax10_expf_polymodel = r"logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-1e-05.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
-ax11_expf_standardmodel = r"logs\DEBUGGING.StandardModel.polynomialf.uniform_args.lrate-0.0001.noise0.1.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
-
-ax13_logf_polymodel = r"logs\DEBUGGING.PolyModel.cosinef.uniform_args.lrate-1e-05.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
-ax14_logf_standardmodel = r"logs\DEBUGGING.StandardModel.polynomialf.uniform_args.lrate-0.0001.noise0.1.low-1.0.high-5.0.nobs-1000.dim-1.#monomials-10.batchsize-128\version_0\checkpoints\last.ckpt"
+ax13_logf_polymodel = "model_checkpoints/log-polymodel.ckpt"
+ax14_logf_standardmodel = "model_checkpoints/log-standardmodel.ckpt"
 
 print("Read in paths successfully!")
 
-# %%
-print("Creating grid...")
 
+print("Creating grid...")
 # Specify domain that models were trained on
 LOW = 1.
 HIGH = 5.
