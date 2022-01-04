@@ -57,9 +57,9 @@ class StandardModel(pl.LightningModule):
         self.st_total = time.time()
         
         # Initialize list with tracked layerweights
-        self.l1_weights = [self.get_l1weights()]
-        self.l2_weights = [self.get_l2weights()]
-        self.bias_path = [self.get_bias()]
+        # self.l1_weights = [self.get_l1weights()]
+        # self.l2_weights = [self.get_l2weights()]
+        # self.bias_path = [self.get_bias()]
 
     def on_train_epoch_start(self):
         self.st = time.time()
@@ -71,9 +71,9 @@ class StandardModel(pl.LightningModule):
         self.log("time/step", elapsed / steps_done)
     
         # Append layerweights
-        self.l1_weights.append(self.get_l1weights())
-        self.l2_weights.append(self.get_l2weights())
-        self.bias_path.append(self.get_bias())
+        # self.l1_weights.append(self.get_l1weights())
+        # self.l2_weights.append(self.get_l2weights())
+        # self.bias_path.append(self.get_bias())
 
     def on_train_end(self):
         elapsed = time.time() - self.st_total
@@ -106,7 +106,7 @@ class StandardModel(pl.LightningModule):
                 plt.savefig(path, facecolor="white")
                 plt.close()
 
-            plt.show() #to free memory
+            # plt.show() #to free memory
 
         return
 

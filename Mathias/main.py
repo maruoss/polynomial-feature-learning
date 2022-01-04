@@ -21,6 +21,7 @@ from plotter import predictions
 from models.poly import PolyModel
 from models.linear import LinearModel
 from models.standard import StandardModel
+from models.standard_deep import StandardDeepModel
 from datamodule import MyDataModule
 
 # %%
